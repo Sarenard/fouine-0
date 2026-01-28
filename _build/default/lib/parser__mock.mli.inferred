@@ -1,12 +1,17 @@
 type token =
     TIMES
+  | THEN
   | RPAREN
   | PLUS
+  | OR
   | MINUS
   | LPAREN
   | INT of int
+  | IF
   | EOL
+  | ELSE
   | BOOL of bool
+  | AND
 val menhir_begin_marker : int
 val xv_main : Expressions.expr
 val xv_expression : Expressions.expr

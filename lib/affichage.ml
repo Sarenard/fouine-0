@@ -17,6 +17,24 @@ let rec affiche_expr e =
   | Add(e1,e2) -> aff_aux "Add(" e1 e2
   | Mul(e1,e2) -> aff_aux "Mul(" e1 e2
   | Min(e1,e2) -> aff_aux "Min(" e1 e2
+  | Or(e1,e2) -> (
+    affiche_expr e1;
+	  print_string " || ";
+    affiche_expr e2;
+  )
+  | And(e1,e2) -> (
+    affiche_expr e1;
+	  print_string " && ";
+    affiche_expr e2;
+  )
+  | If(e1, e2, e3) ->
+    (print_string "If(";
+    affiche_expr e1;
+	  print_string ", ";
+    affiche_expr e2;
+	  print_string ", ";
+    affiche_expr e3;
+    print_string ")";)
 
 let affiche_val v = 
   match v with 

@@ -1,17 +1,19 @@
-(* un type pour des expressions arithmétiques simples *)
+(* un type pour des expressions simples *)
 type expr =
     Int of int
   | Bool of bool
   | Add of expr*expr
   | Mul of expr*expr
   | Min of expr*expr
-
-(* sémantique opérationnelle à grands pas *)
+  | Or of expr*expr
+  | And of expr*expr
+  | If of expr*expr*expr
 
 let print_bool = function
   | true  -> print_string "true"
   | false -> print_string "false"
-
+  
+(* sémantique opérationnelle à grands pas *)
 type valeur = 
     VI of int
   | VB of bool
@@ -45,4 +47,22 @@ let rec eval = function
       | (VI k1,VI k2) -> VI (k1 - k2)
       | _ -> Boom
     )
-
+  | If(e1, e2, e3) -> 
+    let v = eval e1 in (
+      match v with
+      | (VB true) -> eval e2
+      | (VB false) -> eval e3
+      | _ -> Boom
+    )
+  | Or(e1,e2) -> 
+    let v1, v2 = eval e1, eval e2 in (
+      match (v1,v2) with
+      | (VB k1,VB k2) -> VB (k1 || k2)
+      | _ -> Boom
+    )
+  | And(e1,e2) -> 
+    let v1, v2 = eval e1, eval e2 in (
+      match (v1,v2) with
+      | (VB k1,VB k2) -> VB (k1 && k2)
+      | _ -> Boom
+    )

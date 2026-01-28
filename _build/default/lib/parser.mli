@@ -3,13 +3,18 @@
 
 type token = 
   | TIMES
+  | THEN
   | RPAREN
   | PLUS
+  | OR
   | MINUS
   | LPAREN
   | INT of (int)
+  | IF
   | EOL
+  | ELSE
   | BOOL of (bool)
+  | AND
 
 (* This exception is raised by the monolithic API functions. *)
 
