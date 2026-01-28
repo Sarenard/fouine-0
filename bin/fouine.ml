@@ -22,7 +22,8 @@ let recupere_entree () =
 let run () =
   try
     let saisie = recupere_entree () in
-    let _out = Expressions.eval saisie in
+    let _ = (Expressions.affiche_expr saisie; print_newline ()) in (*to desactivate for tests*)
+    let _out = Expressions.eval saisie [] in
     flush stdout
   with e -> raise e  (* <-- en cas d'exception *)
 

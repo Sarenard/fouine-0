@@ -7,6 +7,7 @@
 (* définitions d'expressions régulières *)
 let chiffre = ['0'-'9']
 let nombre = chiffre+
+let var = ['a'-'z' '_']['a'-'z' 'A'-'Z' '0'-'9' '_' '\'']*
 let bool = "true"|"false"
                
 rule token = parse    (* la "fonction" aussi s'appelle token .. *)
@@ -20,9 +21,13 @@ rule token = parse    (* la "fonction" aussi s'appelle token .. *)
   | ')'             { RPAREN }
   | "if"             { IF }
   | "||"             { OR }
+  | "let"             { LET }
+  | "="             { EQ }
+  | "in"             { IN }
   | "&&"             { AND }
   | "then"             { THEN }
   | "else"             { ELSE }
   | "prInt"             { PRINT }
   | bool as b { BOOL (bool_of_string b)}
   | nombre as s { INT (int_of_string s) }
+  | var as s { VAR s }
