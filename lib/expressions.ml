@@ -147,7 +147,4 @@ let rec eval value env = match value with
       | (VI k) -> (VI (prInt k));
       | _ -> Boom
     )
-  | Let(str, e1, e2) ->
-      match List.assoc_opt str env with 
-      | Some _ -> Boom
-      | None -> eval e2 ((str, e1)::env);
+  | Let(str, e1, e2) -> eval e2 ((str, e1)::env);
