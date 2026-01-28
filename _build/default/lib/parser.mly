@@ -7,13 +7,14 @@ open Expressions
 %token PLUS TIMES MINUS
 %token LPAREN RPAREN
 %token IF THEN ELSE
+%token PRINT
 %token EOL             /* EOL = End Of Line, retour à la ligne */
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
 
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
-%nonassoc ELSE
+%nonassoc ELSE PRINT
 %left OR
 %left AND
 %left PLUS MINUS
@@ -43,6 +44,7 @@ expression:
   | e1=expression AND e2=expression     { And(e1,e2) }
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
   | MINUS e=expression                    { Min(Int 0, e) } (* le moins unaire *)
+  | PRINT e=expression                    { PrInt(e) } (* le moins unaire *)
   | LPAREN e=expression RPAREN            { e } 
 
 

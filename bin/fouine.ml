@@ -1,6 +1,5 @@
 open Lib
 
-
 (* "incantations" qu'il n'est pas nécessaire de comprendre dans un premier
    temps : on récupére l'entrée, dans un fichier ou sur le clavier *)
 let nom_fichier = ref ""
@@ -19,28 +18,13 @@ let recupere_entree () =
     parse () 
   with e -> (Printf.printf "probleme de saisie\n"; raise e)
 
-(* le traitement d'une expression en entrée *)   
-let execute e =
-  begin
-    print_string "Affichage de l'arbre :";
-    print_newline();
-    Affichage.affiche_expr e; (* on affiche e *)
-    print_newline();
-    print_string "Valeur :";
-    print_newline();
-    let v =  Expressions.eval e in (* on évalue e *)
-    Affichage.affiche_val v;
-    print_newline();
-  end
-
 (* la fonction principale *)
 let run () =
   try
-    print_string "Entree :"; print_newline ();
     let saisie = recupere_entree () in
-    execute saisie; flush stdout
+    let _out = Expressions.eval saisie in
+    flush stdout
   with e -> raise e  (* <-- en cas d'exception *)
-
 
 let _ = run ()
 

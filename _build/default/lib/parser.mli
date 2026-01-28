@@ -5,6 +5,7 @@ type token =
   | TIMES
   | THEN
   | RPAREN
+  | PRINT
   | PLUS
   | OR
   | MINUS
