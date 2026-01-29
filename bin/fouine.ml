@@ -20,7 +20,8 @@ let run () =
   try
     let saisie = recupere_entree () in
     let _ = (Expr.affiche_expr saisie; print_newline ()) in (*to desactivate for tests*)
-    let _out = Eval.eval saisie [] in
+    let out = Eval.eval saisie [] in
+    let _ = (Expr.affiche_val out; print_newline ()) in
     flush stdout
   with e -> raise e
 

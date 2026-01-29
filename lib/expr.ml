@@ -77,18 +77,25 @@ let rec affiche_expr e =
 
 (*valeurs*)
 type valeur = 
-    VI of int
+  | VI of int
   | VB of bool
+  | VF of env*string*expr
   | Boom
+
+  (*environments*)
+and env = (string * valeur) list
 
 let affiche_val v = 
   match v with 
   | VI k -> print_int k
   | VB k -> print_bool k
+  | VF (_env, x, e) -> 
+    print_string "F(";
+    print_string x;
+    print_string ", ";
+    affiche_expr e; 
+    print_string ")";
   | Boom -> print_string "Boom"
-  
-(*environments*)
-type env = (string * valeur) list
 
 let print_env env = List.iter (fun (x, e) ->
   print_string x; print_string " -> "; affiche_expr e; print_newline ();

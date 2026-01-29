@@ -50,8 +50,12 @@ let rec eval value env = match value with
       | (VI k) -> (VI (prInt k));
       | _ -> Boom
     )
-  | App(_e1, _e2) -> Boom
-
+  | App(e1, e2) -> 
+    let v1, v2 = eval e1 env, eval e2 env in (
+      match v1 with 
+      | VF(env, x, e) -> eval e (((x, v2))::env);
+      | _ -> Boom
+    )
   (*TODO : handle _*)
   | Let(str, e1, e2) -> eval e2 ((str, eval e1 env)::env);
-  | Fun(_str, _e) -> print_endline "caca"; Boom
+  | Fun(str, e) -> VF(env, str, e)
