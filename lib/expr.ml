@@ -10,6 +10,7 @@ type expr =
   | Min of expr*expr
   | Or of expr*expr
   | And of expr*expr
+  | Eq of expr*expr
   | If of expr*expr*expr
   | PrInt of expr
   | Let of string*expr*expr
@@ -33,6 +34,7 @@ let rec affiche_expr e =
   | Add(e1,e2) -> aff_aux "Add(" e1 e2
   | Mul(e1,e2) -> aff_aux "Mul(" e1 e2
   | Min(e1,e2) -> aff_aux "Min(" e1 e2
+  | Eq(e1,e2) -> aff_aux "Eq(" e1 e2
   | Or(e1,e2) -> aff_aux "Or(" e1 e2
   | And(e1,e2) -> aff_aux "And(" e1 e2
   | App(e1,e2) -> aff_aux "App(" e1 e2

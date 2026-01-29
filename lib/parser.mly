@@ -17,6 +17,7 @@ open Expr
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
 %nonassoc ELSE IN ARROW (*should print be right-associative ?*)
+%left EQ
 %left OR
 %left AND
 %left PLUS MINUS
@@ -46,6 +47,7 @@ expression:
   | e1=expression MINUS e2=expression     { Min(e1,e2) }
   | e1=expression OR e2=expression     { Or(e1,e2) }
   | e1=expression AND e2=expression     { And(e1,e2) }
+  | e1=expression EQ e2=expression     { Eq(e1,e2) }
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
   | LET e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3) }
   | FUN x=VAR ARROW e=expression { Fun(x,e) }

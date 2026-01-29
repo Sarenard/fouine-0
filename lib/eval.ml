@@ -59,3 +59,10 @@ let rec eval value env = match value with
   (*TODO : handle _*)
   | Let(str, e1, e2) -> eval e2 ((str, eval e1 env)::env);
   | Fun(str, e) -> VF(env, str, e)
+  | Eq(e1, e2) -> 
+    let v1, v2 = eval e1 env, eval e2 env in (
+      match (v1,v2) with
+      | (VB k1,VB k2) -> VB (k1 = k2)
+      | (VI k1,VI k2) -> VB (k1 = k2)
+      | _ -> Boom
+    )
