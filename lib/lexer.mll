@@ -21,6 +21,8 @@ rule token = parse    (* la "fonction" aussi s'appelle token .. *)
   | ')'             { RPAREN }
   | "if"             { IF }
   | "||"             { OR }
+  | "fun"             { FUN }
+  | "->"             { ARROW }
   | "let"             { LET }
   | "="             { EQ }
   | "in"             { IN }

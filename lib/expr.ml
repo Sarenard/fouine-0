@@ -1,0 +1,96 @@
+open Util
+
+(*expressions*)
+type expr =
+    Int of int
+  | Bool of bool
+  | String of string
+  | Add of expr*expr
+  | Mul of expr*expr
+  | Min of expr*expr
+  | Or of expr*expr
+  | And of expr*expr
+  | If of expr*expr*expr
+  | PrInt of expr
+  | Let of string*expr*expr
+  | Fun of string*expr
+
+let rec affiche_expr e =
+  let aff_aux s a b = 
+      begin
+        print_string s;
+        affiche_expr a;
+        print_string ", ";
+        affiche_expr b;
+        print_string ")"
+      end
+  in
+  match e with
+  | Int k -> print_int k
+  | Bool k -> print_bool k
+  | String k -> print_string k
+  | Add(e1,e2) -> aff_aux "Add(" e1 e2
+  | Mul(e1,e2) -> aff_aux "Mul(" e1 e2
+  | Min(e1,e2) -> aff_aux "Min(" e1 e2
+  | Or(e1,e2) -> (
+	  print_string "Or(";
+    affiche_expr e1;
+	  print_string " || ";
+    affiche_expr e2;
+    print_string ")";
+    )
+  | And(e1,e2) -> (
+      print_string "And(";
+      affiche_expr e1;
+      print_string " && ";
+      affiche_expr e2;
+      print_string ")";
+  )
+  | If(e1, e2, e3) ->
+    (print_string "If(";
+    affiche_expr e1;
+	  print_string ", ";
+    affiche_expr e2;
+	  print_string ", ";
+    affiche_expr e3;
+    print_string ")";)
+  | Let(x, e2, e3) ->
+    (print_string "Let(";
+    print_string x;
+	  print_string ", ";
+    affiche_expr e2;
+	  print_string ", ";
+    affiche_expr e3;
+    print_string ")";)
+  | PrInt(e) -> (
+    print_string "PrInt(";
+    affiche_expr e;
+    print_string ")";)
+  | Fun(x, e) -> (
+    print_string "Fun(";
+    print_string x;
+	  print_string ", ";
+    affiche_expr e;
+    print_string ")";)
+
+(*valeurs*)
+type valeur = 
+    VI of int
+  | VB of bool
+  | Boom
+
+let affiche_val v = 
+  match v with 
+  | VI k -> print_int k
+  | VB k -> print_bool k
+  | Boom -> print_string "Boom"
+  
+(*environments*)
+type env = (string * valeur) list
+
+let print_env env = List.iter (fun (x, e) ->
+  print_string x; print_string " -> "; affiche_expr e; print_newline ();
+  ) env;;
+
+(*buildin env*)
+let prInt x = print_int x;print_newline(); x;;

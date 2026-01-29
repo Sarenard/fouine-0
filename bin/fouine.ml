@@ -1,7 +1,5 @@
 open Lib
 
-(* "incantations" qu'il n'est pas nécessaire de comprendre dans un premier
-   temps : on récupére l'entrée, dans un fichier ou sur le clavier *)
 let nom_fichier = ref ""
 
 let recupere_entree () =
@@ -18,14 +16,13 @@ let recupere_entree () =
     parse () 
   with e -> (Printf.printf "probleme de saisie\n"; raise e)
 
-(* la fonction principale *)
 let run () =
   try
     let saisie = recupere_entree () in
-    let _ = (Expressions.affiche_expr saisie; print_newline ()) in (*to desactivate for tests*)
-    let _out = Expressions.eval saisie [] in
+    let _ = (Expr.affiche_expr saisie; print_newline ()) in (*to desactivate for tests*)
+    let _out = Eval.eval saisie [] in
     flush stdout
-  with e -> raise e  (* <-- en cas d'exception *)
+  with e -> raise e
 
 let _ = run ()
 

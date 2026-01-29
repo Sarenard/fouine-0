@@ -1,5 +1,5 @@
 %{
-open Expressions 
+open Expr
 %}
 
 /* PARTIE 2, on liste les lexèmes (lien avec le fichier lexer.mll) ******* */                                   
@@ -7,7 +7,7 @@ open Expressions
 %token OR AND
 %token PLUS TIMES MINUS
 %token LPAREN RPAREN
-%token LET IF THEN ELSE IN
+%token LET IF THEN ELSE IN FUN ARROW
 %token PRINT
 %token EOL             /* EOL = End Of Line, retour à la ligne */
 %token <int> INT       /* le lexème INT a un attribut entier */
@@ -16,7 +16,7 @@ open Expressions
 
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
-%nonassoc ELSE IN (*should print be right-associative ?*)
+%nonassoc ELSE IN ARROW (*should print be right-associative ?*)
 %left OR
 %left AND
 %left PLUS MINUS
@@ -26,14 +26,14 @@ open Expressions
 /* PARTIE 4, le point d'entrée ******************************************* */
 %start main             /* "start" signale le point d'entrée du parser: */
                         /* c'est ici le non-terminal "main", qui est défini plus bas */
-%type <Expressions.expr> main     /* on _doit_ donner le type associé au point d'entrée "main" */
+%type <Expr.expr> main     /* on _doit_ donner le type associé au point d'entrée "main" */
 
 /* PARTIE 5 : la grammaire, enfin ! ************************************** */                                                         
 %%
 
 main:                       /* <- le point d'entrée (cf. + haut, "start") */
 e=expression EOL { e }  /* on reconnaît une expression suivie de "EndOfLine", on la renvoie telle quelle */
-  
+
 
 /* règles de grammaire pour les expressions ; le non-terminal s'appelle "expression" */                                                                                
 expression:			   
@@ -47,6 +47,7 @@ expression:
   | e1=expression AND e2=expression     { And(e1,e2) }
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
   | LET e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3) }
+  | FUN x=VAR ARROW e=expression { Fun(x,e) }
   | MINUS e=expression                    { Min(Int 0, e) } (* le moins unaire *)
   | PRINT e=expression                    { PrInt(e) } (* le moins unaire *)
   | LPAREN e=expression RPAREN            { e } 
