@@ -14,7 +14,7 @@ let recupere_entree () =
     let lexbuf = Lexing.from_channel where_from in
     let parse () = Parser.main Lexer.token lexbuf in
     parse () 
-  with e -> (Printf.printf "probleme de saisie\n"; raise e)
+  with e -> (Printf.printf "Asteriiiiiiiiiiiiiiix\n"; raise e)
 
 let run () =
   try
