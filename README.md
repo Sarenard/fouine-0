@@ -17,10 +17,10 @@ dune build && dune exec bin/fouine.exe
 2. fonction `prInt` (cf. les notes de cours)
 3. ajout des déclarations let.. in
 4. ajout des fonctions
+5. prInt natif (dans l'environnement)
 
 ## Etapes à faire
-1. prInt natif (dans l'environnement)
-2. fonctions mu-récursives
+1. fonctions mu-récursives
 
 ## Date limite pour téléverser ce rendu sur la page du portail des études :
 
