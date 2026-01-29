@@ -1,0 +1,4 @@
+(*this is fake ml, fouine compliant but not ocaml compliant*)
+(*because we dont check types*)
+(*its still cool so it will stay in /tests*)
+let fact = (fun f -> fun acc -> fun tot -> (if tot = 1 then acc else f f (acc*tot) (tot-1))) (fun f -> fun acc -> fun tot -> (if tot = 1 then acc else f f (acc*tot) (tot-1))) 1 in fact 10

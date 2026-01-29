@@ -22,6 +22,14 @@ dune build && dune exec bin/fouine.exe
 ## Etapes à faire
 1. fonctions mu-récursives
 
+## Fun sideprojects done
+Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLM pour gagner en temps, c'est un proof of concept). 
+
+Command pour tester :
+```
+echo 5 | perl -ne 'chomp; print "+>".("+" x $_)."[-<[->>++<<]>>[-<<+>>]<]<.\n"' | xargs -I{} python tests/bf.py "{}" --standalone | _build/default/bin/fouine.exe
+```
+
 ## Date limite pour téléverser ce rendu sur la page du portail des études :
 
    **lundi 2 février 2025 à 23h59**
