@@ -12,7 +12,6 @@ type expr =
   | And of expr*expr
   | Eq of expr*expr
   | If of expr*expr*expr
-  | PrInt of expr
   | Let of string*expr*expr
   | Fun of string*expr
   | App of expr*expr
@@ -54,10 +53,6 @@ let rec affiche_expr e =
 	  print_string ", ";
     affiche_expr e3;
     print_string ")";)
-  | PrInt(e) -> (
-    print_string "PrInt(";
-    affiche_expr e;
-    print_string ")";)
   | Fun(x, e) -> (
     print_string "Fun(";
     print_string x;
@@ -70,10 +65,19 @@ type valeur =
   | VI of int
   | VB of bool
   | VF of env*string*expr
+  (*Thx zoé for the idea*)
+  | VF_buildin of (env -> valeur -> valeur)
   | Boom
 
   (*environments*)
 and env = (string * valeur) list
+
+let prInt _env = function
+  | VI x -> print_int x;print_newline(); VI x
+  | _ -> Boom;;
+let empty_env = [
+  ("prInt", (VF_buildin prInt))
+]
 
 let affiche_val v = 
   match v with 
@@ -85,11 +89,10 @@ let affiche_val v =
     print_string ", ";
     affiche_expr e; 
     print_string ")";
+  | VF_buildin(_) -> 
+    print_string "Buildin_func";
   | Boom -> print_string "Boom"
 
 let print_env env = List.iter (fun (x, e) ->
-  print_string x; print_string " -> "; affiche_expr e; print_newline ();
+  print_string x; print_string " -> "; affiche_val e; print_newline ();
   ) env;;
-
-(*buildin env*)
-let prInt x = print_int x;print_newline(); x;;
