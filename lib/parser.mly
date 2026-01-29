@@ -17,8 +17,8 @@ open Expr
 /* priorité plus grande sur une ligne située plus bas */
 %nonassoc ELSE IN ARROW (*should print be right-associative ?*)
 %left EQ
-%left OR
-%left AND
+%right OR (*right associative*)
+%right AND (*right associative*)
 %left PLUS MINUS
 %left TIMES
 
@@ -49,7 +49,7 @@ expression:
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
   | LET e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
   | LET REC e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
-  | FUN x=VAR ARROW e=expression { Fun(x,e) }
+  | FUN args=VAR+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | MINUS e=expression                    { Min(Int 0, e) } (* le moins unaire *)
   | LPAREN e=expression RPAREN            { e } 
   | k=applic                          { k }

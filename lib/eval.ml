@@ -32,18 +32,28 @@ let rec eval value env = match value with
       | (VB false) -> eval e3 env
       | _ -> Boom
     )
-  | Or(e1,e2) -> 
-    let v1, v2 = eval e1 env, eval e2 env in (
-      match (v1,v2) with
-      | (VB k1,VB k2) -> VB (k1 || k2)
-      | _ -> Boom
-    )
-  | And(e1,e2) -> 
-    let v1, v2 = eval e1 env, eval e2 env in (
-      match (v1,v2) with
-      | (VB k1,VB k2) -> VB (k1 && k2)
-      | _ -> Boom
-    )
+  | Or(e1,e2) ->
+    let v1 = eval e1 env in (
+      match v1 with
+      | VB true -> VB true
+      | _ -> (
+        let v2 = eval e2 env in 
+        match (v1,v2) with
+        | (VB k1,VB k2) -> VB (k1 || k2)
+        | _ -> Boom
+      )
+    ) 
+  | And(e1,e2) ->
+    let v1 = eval e1 env in (
+      match v1 with
+      | VB false -> VB false
+      | _ -> (
+        let v2 = eval e2 env in 
+        match (v1,v2) with
+        | (VB k1,VB k2) -> VB (k1 && k2)
+        | _ -> Boom
+      )
+    ) 
   | App(e1, e2) ->
     let v1, v2 = eval e1 env, eval e2 env in (
       match v1 with 
