@@ -18,9 +18,9 @@ dune build && dune exec bin/fouine.exe
 3. ajout des déclarations let.. in
 4. ajout des fonctions
 5. prInt natif (dans l'environnement)
+6. fonctions mu-récursives
 
 ## Etapes à faire
-1. fonctions mu-récursives
 
 ## Fun sideprojects done
 Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLM pour gagner en temps, c'est un proof of concept). 
