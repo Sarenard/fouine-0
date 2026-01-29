@@ -18,6 +18,7 @@ rule token = parse    (* la "fonction" aussi s'appelle token .. *)
   | '*'             { TIMES }
   | '-'             { MINUS }
   | '('             { LPAREN }
+  | ','             { COMMA }
   | ')'             { RPAREN }
   | "if"             { IF }
   | "||"             { OR }

@@ -77,8 +77,7 @@ let rec eval value env = match value with
   | Fun(str, e) -> VF(env, str, e)
   | Eq(e1, e2) -> 
     let v1, v2 = eval e1 env, eval e2 env in (
-      match (v1,v2) with
-      | (VB k1,VB k2) -> VB (k1 = k2)
-      | (VI k1,VI k2) -> VB (k1 = k2)
-      | _ -> print_string "c"; Boom
+      VB (compare_val v1 v2)
     )
+  | Unit -> VU
+  | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))

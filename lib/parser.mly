@@ -6,7 +6,7 @@ open Expr
 %token EQ
 %token OR AND
 %token PLUS TIMES MINUS
-%token LPAREN RPAREN
+%token LPAREN RPAREN COMMA
 %token LET IF THEN ELSE IN FUN ARROW REC
 %token EOL             /* EOL = End Of Line, retour à la ligne */
 %token <int> INT       /* le lexème INT a un attribut entier */
@@ -51,8 +51,15 @@ expression:
   | LET REC e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
   | FUN args=VAR+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | MINUS e=expression                    { Min(Int 0, e) } (* le moins unaire *)
-  | LPAREN e=expression RPAREN            { e } 
   | k=applic                          { k }
+  | LPAREN RPAREN                    { Unit }
+  | LPAREN e=expression RPAREN            { e } 
+  (*TODO : a tuple is a tuple even without parentheses*)
+  | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 
+
+expr_list:
+  | x=expression                        { [x] }
+  | xs=expr_list COMMA x=expression     { xs @ [x] }
 
 applic:
   | e1=applic e2=sexpr {App(e1, e2)}
