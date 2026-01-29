@@ -33,21 +33,9 @@ let rec affiche_expr e =
   | Add(e1,e2) -> aff_aux "Add(" e1 e2
   | Mul(e1,e2) -> aff_aux "Mul(" e1 e2
   | Min(e1,e2) -> aff_aux "Min(" e1 e2
+  | Or(e1,e2) -> aff_aux "Or(" e1 e2
+  | And(e1,e2) -> aff_aux "And(" e1 e2
   | App(e1,e2) -> aff_aux "App(" e1 e2
-  | Or(e1,e2) -> (
-	  print_string "Or(";
-    affiche_expr e1;
-	  print_string " || ";
-    affiche_expr e2;
-    print_string ")";
-    )
-  | And(e1,e2) -> (
-      print_string "And(";
-      affiche_expr e1;
-      print_string " && ";
-      affiche_expr e2;
-      print_string ")";
-  )
   | If(e1, e2, e3) ->
     (print_string "If(";
     affiche_expr e1;
