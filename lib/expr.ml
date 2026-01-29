@@ -12,7 +12,7 @@ type expr =
   | And of expr*expr
   | Eq of expr*expr
   | If of expr*expr*expr
-  | Let of string*expr*expr
+  | Let of string*expr*expr*bool (*true = recursive*)
   | Fun of string*expr
   | App of expr*expr
 
@@ -45,13 +45,15 @@ let rec affiche_expr e =
 	  print_string ", ";
     affiche_expr e3;
     print_string ")";)
-  | Let(x, e2, e3) ->
+  | Let(x, e2, e3, recursive) ->
     (print_string "Let(";
     print_string x;
 	  print_string ", ";
     affiche_expr e2;
 	  print_string ", ";
     affiche_expr e3;
+    print_string ", ";
+    print_bool recursive;
     print_string ")";)
   | Fun(x, e) -> (
     print_string "Fun(";

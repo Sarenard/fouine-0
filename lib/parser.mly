@@ -7,7 +7,7 @@ open Expr
 %token OR AND
 %token PLUS TIMES MINUS
 %token LPAREN RPAREN
-%token LET IF THEN ELSE IN FUN ARROW
+%token LET IF THEN ELSE IN FUN ARROW REC
 %token EOL             /* EOL = End Of Line, retour à la ligne */
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
@@ -47,7 +47,8 @@ expression:
   | e1=expression AND e2=expression     { And(e1,e2) }
   | e1=expression EQ e2=expression     { Eq(e1,e2) }
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
-  | LET e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3) }
+  | LET e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
+  | LET REC e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
   | FUN x=VAR ARROW e=expression { Fun(x,e) }
   | MINUS e=expression                    { Min(Int 0, e) } (* le moins unaire *)
   | LPAREN e=expression RPAREN            { e } 

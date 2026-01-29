@@ -29,6 +29,7 @@ rule token = parse    (* la "fonction" aussi s'appelle token .. *)
   | "&&"             { AND }
   | "then"             { THEN }
   | "else"             { ELSE }
+  | "rec"             { REC }
   | bool as b { BOOL (bool_of_string b)}
   | nombre as s { INT (int_of_string s) }
   | var as s { VAR s }
