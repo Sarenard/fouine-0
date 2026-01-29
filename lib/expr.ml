@@ -14,6 +14,7 @@ type expr =
   | PrInt of expr
   | Let of string*expr*expr
   | Fun of string*expr
+  | App of expr*expr
 
 let rec affiche_expr e =
   let aff_aux s a b = 
@@ -32,6 +33,7 @@ let rec affiche_expr e =
   | Add(e1,e2) -> aff_aux "Add(" e1 e2
   | Mul(e1,e2) -> aff_aux "Mul(" e1 e2
   | Min(e1,e2) -> aff_aux "Min(" e1 e2
+  | App(e1,e2) -> aff_aux "App(" e1 e2
   | Or(e1,e2) -> (
 	  print_string "Or(";
     affiche_expr e1;

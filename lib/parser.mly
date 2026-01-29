@@ -40,6 +40,7 @@ expression:
    /* on appelle i l'attribut associé à INT */
   | i=INT                             { Int i }
   | b=BOOL                             { Bool b }
+  | s=VAR                             { String s }
   | e1=expression PLUS e2=expression      { Add(e1,e2) }
   | e1=expression TIMES e2=expression     { Mul(e1,e2) }
   | e1=expression MINUS e2=expression     { Min(e1,e2) }
@@ -51,6 +52,14 @@ expression:
   | MINUS e=expression                    { Min(Int 0, e) } (* le moins unaire *)
   | PRINT e=expression                    { PrInt(e) } (* le moins unaire *)
   | LPAREN e=expression RPAREN            { e } 
-  | s=VAR                             { String s }
+  | k=applic                          { k }
 
+applic:
+  | e1=applic e2=sexpr {App(e1, e2)}
+  | e1=sexpr e2=sexpr {App(e1, e2)}
 
+sexpr:
+  | LPAREN e=expression RPAREN {e}
+  | i=INT {Int i}
+  | b=BOOL {Bool b}
+  | s=VAR {String s}

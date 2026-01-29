@@ -50,6 +50,8 @@ let rec eval value env = match value with
       | (VI k) -> (VI (prInt k));
       | _ -> Boom
     )
+  | App(_e1, _e2) -> Boom
+
   (*TODO : handle _*)
   | Let(str, e1, e2) -> eval e2 ((str, eval e1 env)::env);
   | Fun(_str, _e) -> print_endline "caca"; Boom
