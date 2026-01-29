@@ -40,12 +40,6 @@ def test(file):
         return True
     return False
 
-class File:
-    def __init__(self, name, expected_output=b'', expected_error=b''):
-        self.name = f"tests/{name}.ml"
-        self.expected_output  = expected_output
-        self.expected_error   = expected_error
-
 ml_files = [
     f for f in os.listdir("tests")
     if f.endswith(".ml") and f != "temp.ml"
