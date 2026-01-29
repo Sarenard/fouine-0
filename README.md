@@ -19,7 +19,8 @@ dune build && dune exec bin/fouine.exe
 4. ajout des fonctions
 
 ## Etapes à faire
-1. fonctions récursives
+1. prInt natif (dans l'environnement)
+2. fonctions mu-récursives
 
 ## Date limite pour téléverser ce rendu sur la page du portail des études :
 

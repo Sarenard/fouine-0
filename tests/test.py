@@ -2,13 +2,13 @@ from colorprint import colorprint as cprint
 import subprocess
 import os
 
-overhead = "let prInt x = print_int x;print_newline(); x;;"
+prelude = "let prInt x = print_int x;print_newline(); x;;"
 
 def test(file):
     err = False
     with open(f"tests/{file}", "r") as f:
         with open("tests/temp.ml", "w") as tf:
-            tf.write(overhead+f.read())
+            tf.write(prelude+f.read())
     try:
         with open("tests/temp.ml", "r") as f:
             caml_result = subprocess.run(
