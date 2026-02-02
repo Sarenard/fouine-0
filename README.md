@@ -11,6 +11,11 @@ pour lancer le programme, faire
 dune build && dune exec bin/fouine.exe
 ```
 
+pour lancer les tests, faire
+```
+python tests/test.py
+```
+
 ## Etapes réalisées
 
 1. opérateurs booléens et `if.. then.. else`
@@ -25,7 +30,7 @@ dune build && dune exec bin/fouine.exe
 1. gérer les tuples sans parenthèses
 
 ## Fun sideprojects done
-Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails) pour gagner en temps (car deadline proche), c'était surtout pour voir si c'était possible).
+Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible).
 
 Command pour tester :
 ```
