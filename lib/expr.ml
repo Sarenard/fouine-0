@@ -6,12 +6,16 @@ type expr =
   | Int of int
   | Bool of bool
   | String of string
+  | Ref of expr
+  | Bang of string
+  | Assign of string*expr
   | If of expr*expr*expr
   | Let of string*expr*expr*bool (*true = recursive*)
   | Fun of string*expr
   | App of expr*expr
   | Tuple of expr list
   | Op of string*expr*expr
+  | Seq of expr*expr
 
 let rec affiche_expr e =
   let aff_aux s a b = 
@@ -28,6 +32,7 @@ let rec affiche_expr e =
   | Bool k -> print_bool k
   | String k -> print_string k
   | App(e1,e2) -> aff_aux "App(" e1 e2
+  | Seq(e1,e2) -> aff_aux "Seq(" e1 e2
   | Op(name, e1,e2) ->
     print_string "Op(";
     print_string name;
@@ -60,6 +65,20 @@ let rec affiche_expr e =
 	  print_string ", ";
     affiche_expr e;
     print_string ")";)
+  | Assign(x, e) -> (
+    print_string "Assign(";
+    print_string x;
+	  print_string ", ";
+    affiche_expr e;
+    print_string ")";)
+  | Ref(e) -> (
+    print_string "Ref(";
+    affiche_expr e;
+    print_string ")";)
+  | Bang(s) -> (
+    print_string "Bang(";
+    print_string s;
+    print_string ")";)
   | Unit -> print_string "Unit"
   | Tuple(lst) -> (
     print_string "Tuple(";
@@ -71,6 +90,7 @@ let rec affiche_expr e =
 type valeur = 
   | VU
   | VI of int
+  | VR of int
   | VB of bool
   | VF of env*string*expr
   (*Thx zoé for the idea*)
@@ -92,6 +112,10 @@ let empty_env = [
 let rec affiche_val v = 
   match v with 
   | VU -> print_string "Unit"
+  | VR k ->
+    print_string "R(";
+    print_int k;
+    print_string ")";
   | VI k -> print_int k
   | VB k -> print_bool k
   | VF (_env, x, e) -> 
@@ -120,3 +144,29 @@ let print_env env = List.iter (fun (x, e) ->
   print_string x; print_string " -> "; affiche_val e; print_newline ();
   ) env;;
 
+(*heap*)
+type heap = {
+  array: valeur array;
+  mutable last_free: int;
+  size: int;
+};;
+
+let print_array arr =
+  Array.iter (fun x -> affiche_val x; print_string " ,") arr;
+  print_newline ();;
+
+let print_heap heap = 
+  print_string "Heap :\n";
+  print_array heap.array;
+  print_int heap.last_free;
+  print_int heap.size;
+  print_string "Heap END\n";;
+
+let set_new value heap =
+  if heap.last_free = heap.size then 
+    failwith "Pu de place" 
+  else (
+    heap.array.(heap.last_free) <- value;
+    heap.last_free <- heap.last_free + 1;
+    heap.last_free - 1
+  );;

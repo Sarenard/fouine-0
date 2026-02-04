@@ -33,6 +33,8 @@ def test(file):
     # TODO : better handle when error (relaunch fouine in debug mode ?)
     if err or fouine_result.stderr != caml_result.stderr:
         cprint(f"Error not conform in {file}", "red")
+        cprint(f"Caml   : {caml_result.stderr}", "red")
+        cprint(f"Fouine : {fouine_result.stderr}", "red")
     if err or fouine_result.stdout != caml_result.stdout:
         cprint(f"Output not conform in {file}", "red")
         cprint(f"Caml   : {caml_result.stdout}", "red")

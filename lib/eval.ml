@@ -1,5 +1,12 @@
 open Expr
 
+let size = 1000;;
+let heap = {
+  array = Array.make size Boom;
+  last_free = 0;
+  size = size;
+};;
+
 (* évaluation d'une expression en une valeur *)
 let rec eval value env = match value with 
   | Int k -> VI k
@@ -63,6 +70,18 @@ let rec eval value env = match value with
     in func e1 e2
     )
   | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))
+  | Ref(e) -> 
+    let v = eval e env in
+    VR (set_new v heap)
+  | Bang(s) -> 
+    let v = eval (String s) env in (match v with
+    | VR k -> heap.array.(k)
+    | _ -> Boom)
+  | Assign(s, e) -> 
+    let v = eval (String s) env in (match v with
+    | VR k -> (heap.array.(k) <- eval e env); VU
+    | _ -> Boom)
+  | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
 
 and opint env func e1 e2 = 
   let v2 = (eval e2 env) in let v1 = (eval e1 env) in
