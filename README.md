@@ -6,9 +6,9 @@ Ce répertoire contient le projet fouine, jusqu'au rendu 0
 
 Les commandes ci-dessous sont à exécuter dans le répertoire principal, qui est au-dessus de bin/ et lib/.
 
-pour lancer le programme, faire
+pour lancer fouine, faire
 ```
-dune build && dune exec bin/fouine.exe
+dune build && _build/default/bin/fouine.exe
 ```
 
 pour lancer les tests, faire
@@ -18,6 +18,7 @@ python tests/test.py
 
 ## Etapes réalisées
 
+### Rendu 0
 1. opérateurs booléens et `if.. then.. else`
 2. fonction `prInt` (cf. les notes de cours)
 3. ajout des déclarations let.. in
@@ -25,21 +26,28 @@ python tests/test.py
 5. prInt natif (dans l'environnement)
 6. fonctions mu-récursives
 6. tuples (comparaisons, support)
+### Rendu 1
+### Rendu 2
 
 ## Etapes à faire
-1. gérer les tuples sans parenthèses
+1. Opérateurs buildins gérés correctement
+2. Faire tout les opérateurs buildins
+3. begin end
+4. let avec _
+5. let sans in au toplevel
+6. refs
+7. fonction avec unit en argument
+8. exceptions
+9.  gérer les tuples sans parenthèses
+10. matchs
+11. listes
+12. types algébriques
 
-## Fun sideprojects done
-Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible).
+# Fun sideprojects done
+Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier de tests.
 
 Command pour tester :
 ```
 echo 5 | perl -ne 'chomp; print "+>".("+" x $_)."[-<[->>++<<]>>[-<<+>>]<]<.\n"' | xargs -I{} python tests/bf.py "{}" --standalone | _build/default/bin/fouine.exe
 ```
 
-## Date limite pour téléverser ce rendu sur la page du portail des études :
-
-   **lundi 2 février 2025 à 23h59**
-
-     . indiquez brièvement au début du fichier Readme ce que vous avez pu ajouter à fouine
-     . envoyez une archive **qui compile**

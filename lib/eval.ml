@@ -71,7 +71,7 @@ let rec eval value env = match value with
           let rec new_env = ((str, VF(new_env, name, expr))::env) in
           eval e2 new_env;
         )
-      | v1 -> eval e2 ((str, v1)::env);
+      | _v1 -> Boom;
     )
     
   | Fun(str, e) -> VF(env, str, e)
