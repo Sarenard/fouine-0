@@ -41,7 +41,8 @@ python tests/test.py
 9.  gérer les tuples sans parenthèses
 10. matchs
 11. listes
-12. types algébriques
+12. Erreurs
+13. types algébriques
 
 # Fun sideprojects done
 Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier de tests.

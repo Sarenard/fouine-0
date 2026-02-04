@@ -14,28 +14,6 @@ let rec eval value env = match value with
       | (VB false) -> eval e3 env
       | _ -> Boom
     )
-  | Or(e1,e2) ->
-    let v1 = eval e1 env in (
-      match v1 with
-      | VB true -> VB true
-      | _ -> (
-        let v2 = eval e2 env in 
-        match (v1,v2) with
-        | (VB k1,VB k2) -> VB (k1 || k2)
-        | _ -> Boom
-      )
-    ) 
-  | And(e1,e2) ->
-    let v1 = eval e1 env in (
-      match v1 with
-      | VB false -> VB false
-      | _ -> (
-        let v2 = eval e2 env in 
-        match (v1,v2) with
-        | (VB k1,VB k2) -> VB (k1 && k2)
-        | _ -> Boom
-      )
-    ) 
   | App(e1, e2) ->
     let v1, v2 = eval e1 env, eval e2 env in (
       match v1 with 
@@ -57,20 +35,37 @@ let rec eval value env = match value with
     )
     
   | Fun(str, e) -> VF(env, str, e)
-  | Eq(e1, e2) -> 
-    let v1, v2 = eval e1 env, eval e2 env in (
-      VB (compare_val v1 v2)
-    )
   | Unit -> VU
-  | OpInt (name, e1, e2) -> (
-    let v2 = eval e2 env in let v1 = eval e1 env in
+  | Op (name, e1, e2) -> (
     let func = match name with
-      | "+" -> (+)
-      | "-" -> (-)
-      | "*" -> ( * )
-      | _ -> failwith "unknown op"
-    in match (v1, v2) with
-      | (VI x, VI y) -> VI (func x y)
-      | _ -> Boom
+      | "+" -> opint env ( + )
+      | "-" -> opint env ( - )
+      | "*" -> opint env ( * )
+      | "&&" -> fun e1 e2 -> (
+        let v1 = eval e1 env in match v1 with
+        | VB false -> VB false
+        | VB true -> (let v2 = eval e2 env in match v2 with
+          | (VB k2) -> VB k2
+          | _ -> Boom)
+        | _ -> Boom
+      ) 
+      | "||" -> fun e1 e2 -> (
+        let v1 = eval e1 env in match v1 with
+        | VB true -> VB true
+        | VB false -> (let v2 = eval e2 env in match v2 with
+          | (VB k2) -> VB k2
+          | _ -> Boom)
+        | _ -> Boom
+      ) 
+      (*wow thats strange, maybe i will want to change that ?*)
+      | "=" -> (fun x y -> VB (compare_val (eval x env) (eval y env)))
+      | _ -> (fun _ _ -> Boom)
+    in func e1 e2
     )
   | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))
+
+and opint env func e1 e2 = 
+  let v2 = (eval e2 env) in let v1 = (eval e1 env) in
+    match (v1, v2) with
+      | (VI x, VI y) -> (VI (func x y))
+      | _ -> Boom;;
