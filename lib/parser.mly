@@ -18,8 +18,8 @@ open Expr
 /* priorité plus grande sur une ligne située plus bas */
 %nonassoc ELSE IN ARROW (*should print be right-associative ?*)
 %left EQ
-%right OR (*right associative*)
-%right AND (*right associative*)
+%right AND
+%right OR
 %left PLUS MINUS
 %left TIMES
 
