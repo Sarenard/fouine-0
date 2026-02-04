@@ -6,6 +6,7 @@ open Expr
 %token EQ
 %token OR AND
 %token PLUS TIMES MINUS
+%token BEGIN END
 %token LPAREN RPAREN COMMA
 %token LET IF THEN ELSE IN FUN ARROW REC
 %token EOL             /* EOL = End Of Line, retour à la ligne */
@@ -53,6 +54,8 @@ expression:
   | MINUS e=expression                    { Min(Int 0, e) } (* le moins unaire *)
   | k=applic                          { k }
   | LPAREN RPAREN                    { Unit }
+  | BEGIN END                             { Unit }
+  | BEGIN e=expression END                { e }
   | LPAREN e=expression RPAREN            { e } 
   (*TODO : a tuple is a tuple even without parentheses*)
   | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 

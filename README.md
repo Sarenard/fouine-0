@@ -27,12 +27,12 @@ python tests/test.py
 6. fonctions mu-récursives
 6. tuples (comparaisons, support)
 ### Rendu 1
+1. begin end (maya)
 ### Rendu 2
 
 ## Etapes à faire
 1. Opérateurs buildins gérés correctement
 2. Faire tout les opérateurs buildins
-3. begin end
 4. let avec _
 5. let sans in au toplevel
 6. refs
