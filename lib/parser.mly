@@ -41,9 +41,9 @@ expression:
   | i=INT                             { Int i }
   | b=BOOL                             { Bool b }
   | s=VAR                             { String s }
-  | e1=expression PLUS e2=expression      { Add(e1,e2) }
-  | e1=expression TIMES e2=expression     { Mul(e1,e2) }
-  | e1=expression MINUS e2=expression     { Min(e1,e2) }
+  | e1=expression PLUS e2=expression      { OpInt("+", e1, e2) }
+  | e1=expression TIMES e2=expression     { OpInt("*", e1, e2) }
+  | e1=expression MINUS e2=expression     { OpInt("-", e1, e2) }
   | e1=expression OR e2=expression     { Or(e1,e2) }
   | e1=expression AND e2=expression     { And(e1,e2) }
   | e1=expression EQ e2=expression     { Eq(e1,e2) }
@@ -51,7 +51,7 @@ expression:
   | LET e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
   | LET REC e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
   | FUN args=VAR+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
-  | MINUS e=expression                    { Min(Int 0, e) } (* le moins unaire *)
+  | MINUS e=expression                    { OpInt("-", Int 0, e) } (* le moins unaire *)
   | k=applic                          { k }
   | LPAREN RPAREN                    { Unit }
   | BEGIN END                             { Unit }

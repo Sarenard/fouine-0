@@ -7,24 +7,6 @@ let rec eval value env = match value with
   | String s -> (match List.assoc_opt s env with 
     | Some v1 -> v1
     | None -> Boom)
-  | Add(e1,e2) ->
-    let v1, v2 = eval e1 env, eval e2 env in (
-      match (v1,v2) with
-      | (VI k1,VI k2) -> VI (k1+k2)
-      | _ -> Boom
-    )
-  | Mul(e1,e2) -> 
-    let v1, v2 = eval e1 env, eval e2 env in (
-      match (v1,v2) with
-      | (VI k1,VI k2) -> VI (k1 * k2)
-      | _ -> Boom
-    )
-  | Min(e1,e2) -> 
-    let v1, v2 = eval e1 env, eval e2 env in (
-      match (v1,v2) with
-      | (VI k1,VI k2) -> VI (k1 - k2)
-      | _ -> Boom
-    )
   | If(e1, e2, e3) -> 
     let v = eval e1 env in (
       match v with
@@ -80,4 +62,15 @@ let rec eval value env = match value with
       VB (compare_val v1 v2)
     )
   | Unit -> VU
+  | OpInt (name, e1, e2) -> (
+    let v2 = eval e2 env in let v1 = eval e1 env in
+    let func = match name with
+      | "+" -> (+)
+      | "-" -> (-)
+      | "*" -> ( * )
+      | _ -> failwith "unknown op"
+    in match (v1, v2) with
+      | (VI x, VI y) -> VI (func x y)
+      | _ -> Boom
+    )
   | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))

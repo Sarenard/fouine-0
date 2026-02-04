@@ -35,6 +35,8 @@ def test(file):
         cprint(f"Error not conform in {file}", "red")
     if err or fouine_result.stdout != caml_result.stdout:
         cprint(f"Output not conform in {file}", "red")
+        cprint(f"Caml   : {caml_result.stdout}", "red")
+        cprint(f"Fouine : {fouine_result.stdout}", "red")
     if not err and fouine_result.stdout == caml_result.stdout and fouine_result.stderr == caml_result.stderr:
         cprint(f"Test {file} passed", "green")
         return True

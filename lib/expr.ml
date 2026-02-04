@@ -6,9 +6,6 @@ type expr =
   | Int of int
   | Bool of bool
   | String of string
-  | Add of expr*expr
-  | Mul of expr*expr
-  | Min of expr*expr
   | Or of expr*expr
   | And of expr*expr
   | Eq of expr*expr
@@ -17,6 +14,7 @@ type expr =
   | Fun of string*expr
   | App of expr*expr
   | Tuple of expr list
+  | OpInt of string*expr*expr
 
 let rec affiche_expr e =
   let aff_aux s a b = 
@@ -32,13 +30,18 @@ let rec affiche_expr e =
   | Int k -> print_int k
   | Bool k -> print_bool k
   | String k -> print_string k
-  | Add(e1,e2) -> aff_aux "Add(" e1 e2
-  | Mul(e1,e2) -> aff_aux "Mul(" e1 e2
-  | Min(e1,e2) -> aff_aux "Min(" e1 e2
   | Eq(e1,e2) -> aff_aux "Eq(" e1 e2
   | Or(e1,e2) -> aff_aux "Or(" e1 e2
   | And(e1,e2) -> aff_aux "And(" e1 e2
   | App(e1,e2) -> aff_aux "App(" e1 e2
+  | OpInt(name, e1,e2) ->
+    print_string "Op(";
+    print_string name;
+    print_string ", ";
+    affiche_expr e1;
+    print_string ", ";
+    affiche_expr e2;
+    print_string ")";
   | If(e1, e2, e3) ->
     (print_string "If(";
     affiche_expr e1;
@@ -122,3 +125,5 @@ let rec compare_val val1 val2 = match (val1, val2) with
 let print_env env = List.iter (fun (x, e) ->
   print_string x; print_string " -> "; affiche_val e; print_newline ();
   ) env;;
+
+
