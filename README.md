@@ -49,6 +49,6 @@ Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message
 
 Command pour tester :
 ```
-echo 5 | perl -ne 'chomp; print "+>".("+" x $_)."[-<[->>++<<]>>[-<<+>>]<]<.\n"' | xargs -I{} python tests/bf.py "{}" --standalone | _build/default/bin/fouine.exe
+echo 5 | perl -ne 'chomp; print "+>".("+" x $_)."[-<[->>++<<]>>[-<<+>>]<]<.\n"' | xargs -I{} python tests/Fun/bf.py "{}" --standalone | _build/default/bin/fouine.exe
 ```
 

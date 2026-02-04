@@ -6,7 +6,7 @@ prelude = "let prInt x = print_int x;print_newline(); x;;"
 
 def test(file):
     err = False
-    with open(f"tests/{file}", "r") as f:
+    with open(file, "r") as f:
         with open("tests/temp.ml", "w") as tf:
             tf.write(prelude+f.read())
     try:
@@ -20,7 +20,7 @@ def test(file):
     except subprocess.CalledProcessError as e:
         err = True
     try:
-        with open(f"tests/{file}", "r") as f:
+        with open(file, "r") as f:
             fouine_result = subprocess.run(
                 ["./_build/default/bin/fouine.exe"],
                 stdin=f,
@@ -42,9 +42,20 @@ def test(file):
         return True
     return False
 
+cprint("Building Project", "green")
+try:
+    with open("tests/temp.ml", "r") as f:
+        caml_result = subprocess.run(
+            ["dune", "build"],
+        )
+except subprocess.CalledProcessError as e:
+    cprint("Error building project", "red")
+cprint("Project successfuly build", "green")
+cprint("")
+
 ml_files = [
-    f for f in os.listdir("tests")
-    if f.endswith(".ml") and f != "temp.ml"
+    os.path.join(root, f) for root, dirs, files in os.walk("tests")
+    for f in files if f.endswith(".ml") and f != "temp.ml"
 ]
 
 total = 0
@@ -55,4 +66,4 @@ print()
 if total == len(ml_files):
     cprint(f"All {total} test passed !!", "green")
 else:
-    cprint(f"Some tests didnt pass : {total}/{len(ml_files)}.", "red")
+    cprint(f"Some tests didnt pass : ({total}/{len(ml_files)} correct).", "red")
