@@ -25,24 +25,24 @@ python tests/test.py
 4. ajout des fonctions
 5. prInt natif (dans l'environnement)
 6. fonctions mu-récursives
-6. tuples (comparaisons, support)
+7. tuples (comparaisons, support)
 ### Rendu 1
-1. begin end (maya)
+1. (Maya) begin end
+2. (Sarah) Opérateurs buildins gérés correctement
 ### Rendu 2
 
 ## Etapes à faire
-1. Opérateurs buildins gérés correctement
-2. Faire tout les opérateurs buildins
-4. let avec _
-5. let sans in au toplevel
-6. refs
-7. fonction avec unit en argument
-8. exceptions
-9.  gérer les tuples sans parenthèses
-10. matchs
-11. listes
-12. Erreurs
-13. types algébriques
+1. Faire tout les opérateurs buildins
+2. let avec _
+3. let sans in au toplevel
+4. refs
+5. fonction avec unit en argument
+6. exceptions
+7. gérer les tuples sans parenthèses
+8. matchs
+9. listes
+10. Erreurs
+11. types algébriques
 
 # Fun sideprojects done
 Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier de tests.
