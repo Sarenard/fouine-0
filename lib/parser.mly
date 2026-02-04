@@ -4,7 +4,7 @@ open Expr
 
 /* PARTIE 2, on liste les lexèmes (lien avec le fichier lexer.mll) ******* */                                   
 %token EQ
-%token REF BANG ASSIGN SEQ
+%token BANG ASSIGN SEQ
 %token OR AND
 %token PLUS TIMES MINUS
 %token BEGIN END
@@ -17,7 +17,7 @@ open Expr
 
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
-%nonassoc ELSE IN ARROW REF
+%nonassoc ELSE IN ARROW
 %left EQ
 %right AND
 %right OR
@@ -58,7 +58,6 @@ expression:
   | k=applic                          { k }
   | LPAREN RPAREN                    { Unit }
   | BEGIN END                             { Unit }
-  | REF e=expression                { Ref(e) }
   | BANG s=VAR                { Bang(s) }
   | s=VAR ASSIGN e=expression                { Assign(s, e) }
   | BEGIN e=expression END                { e }

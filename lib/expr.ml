@@ -6,7 +6,6 @@ type expr =
   | Int of int
   | Bool of bool
   | String of string
-  | Ref of expr
   | Bang of string
   | Assign of string*expr
   | If of expr*expr*expr
@@ -71,10 +70,6 @@ let rec affiche_expr e =
 	  print_string ", ";
     affiche_expr e;
     print_string ")";)
-  | Ref(e) -> (
-    print_string "Ref(";
-    affiche_expr e;
-    print_string ")";)
   | Bang(s) -> (
     print_string "Bang(";
     print_string s;
@@ -94,20 +89,19 @@ type valeur =
   | VB of bool
   | VF of env*string*expr
   (*Thx zoé for the idea*)
-  | VF_buildin of (env -> valeur -> valeur)
+  | VF_buildin of (heap -> env -> valeur -> valeur)
   | VT of valeur list
   | Boom
 
   (*environments*)
 and env = (string * valeur) list
 
-let prInt _env = function
-  | VI x -> print_int x;print_newline(); VI x
-  | _ -> Boom;;
+and heap = {
+  array: valeur array;
+  mutable last_free: int;
+  size: int;
+};;
 
-let empty_env = [
-  ("prInt", (VF_buildin prInt))
-]
 
 let rec affiche_val v = 
   match v with 
@@ -145,11 +139,6 @@ let print_env env = List.iter (fun (x, e) ->
   ) env;;
 
 (*heap*)
-type heap = {
-  array: valeur array;
-  mutable last_free: int;
-  size: int;
-};;
 
 let print_array arr =
   Array.iter (fun x -> affiche_val x; print_string " ,") arr;
@@ -170,3 +159,16 @@ let set_new value heap =
     heap.last_free <- heap.last_free + 1;
     heap.last_free - 1
   );;
+
+
+(*empty environment*)
+let prInt _heap _env = function
+  | VI x -> print_int x;print_newline(); VI x
+  | _ -> Boom;;
+
+let ref_buildin heap _env value = VR (set_new value heap)
+
+let empty_env = [
+  ("prInt", (VF_buildin prInt));
+  ("ref", (VF_buildin ref_buildin));
+]

@@ -33,7 +33,6 @@ rule token = parse    (* la "fonction" aussi s'appelle token .. *)
   | "rec"             { REC }
   | "begin"           { BEGIN }
   | "end"             { END }
-  | "ref"             { REF }
   | ";"             { SEQ }
   | "!"             { BANG }
   | ":="             { ASSIGN }

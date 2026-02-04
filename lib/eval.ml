@@ -25,7 +25,7 @@ let rec eval value env = match value with
     let v1, v2 = eval e1 env, eval e2 env in (
       match v1 with 
       | VF(env, x, e) -> eval e (((x, v2))::env);
-      | VF_buildin(func) -> (func env v2);
+      | VF_buildin(func) -> (func heap env v2);
       | _ -> Boom
     )
   (*TODO : handle _*)
@@ -70,9 +70,6 @@ let rec eval value env = match value with
     in func e1 e2
     )
   | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))
-  | Ref(e) -> 
-    let v = eval e env in
-    VR (set_new v heap)
   | Bang(s) -> 
     let v = eval (String s) env in (match v with
     | VR k -> heap.array.(k)
