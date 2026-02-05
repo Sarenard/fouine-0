@@ -33,9 +33,8 @@ open Expr
 /* PARTIE 5 : la grammaire, enfin ! ************************************** */                                                         
 %%
 
-main:                       /* <- le point d'entrée (cf. + haut, "start") */
-e=expression SEQQ { e }  /* on reconnaît une expression suivie de "EndOfLine", on la renvoie telle quelle */
-
+main:
+  | e=expression SEQQ { e }
 
 /* règles de grammaire pour les expressions ; le non-terminal s'appelle "expression" */                                                                                
 expression:			   
