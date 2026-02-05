@@ -71,7 +71,6 @@ let rec eval value env = match value with
     | _ -> Boom (*not implemented yet*)
   )
   | Fun(str, e) -> VF(env, str, e)
-  | Unit -> VU
   | Op (name, e1, e2) -> (
     let func = match name with
       | "+" -> opint env ( + )

@@ -2,7 +2,6 @@ open Util
 
 (*expressions*)
 type expr =
-  | Unit
   | Int of int
   | Bool of bool
   | String of string
@@ -94,7 +93,6 @@ let rec affiche_expr e =
     print_string "Bang(";
     print_string s;
     print_string ")";)
-  | Unit -> print_string "Unit"
   | Tuple(lst) -> (
     print_string "Tuple(";
     List.iter (fun x -> affiche_expr x; print_string ", ") lst;

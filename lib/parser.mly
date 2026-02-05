@@ -54,8 +54,8 @@ expression:
   | FUN args=VAR+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | MINUS e=expression                    { Op("-", Int 0, e) } (* le moins unaire *)
   | k=applic                          { k }
-  | LPAREN RPAREN                    { Unit }
-  | BEGIN END                             { Unit }
+  | LPAREN RPAREN                    { Tuple [] }
+  | BEGIN END                             { Tuple [] }
   | BANG s=VAR                { Bang(s) }
   | s=VAR ASSIGN e=expression                { Assign(s, e) }
   | BEGIN e=expression END                { e }
@@ -68,6 +68,7 @@ pattern:
   | i=INT {PInt i}
   | b=BOOL {PBool b}
   | LPAREN x=pattern RPAREN  { x } 
+  | LPAREN RPAREN  { PTuple [] } 
   | LPAREN xs=pattern_list COMMA x=pattern RPAREN  { PTuple (xs @ [x]) } 
   | s=VAR {PVar s}
 
