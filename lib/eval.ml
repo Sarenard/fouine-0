@@ -7,6 +7,25 @@ let heap = {
   size = size;
 };;
 
+let rec pattern_match (pat: pattern) (value: valeur) : ((string*valeur) list) option
+ = match (pat, value) with
+  | (PInt k1, VI k2) when k1 = k2 -> Some []
+  | (PBool b1, VB b2) when b1 = b2 -> Some []
+  | (PVar x, value) -> Some [(x,value)]
+  | (PTuple patlist, VT valuelist) ->
+    pattern_match_list [] patlist valuelist
+  | _ -> None
+and pattern_match_list (stack : (string*valeur) list) (pat : pattern list) (vals : valeur list)
+  : (string*valeur) list option = match (pat, vals) with
+  | [], [] -> Some stack
+  | [], _ | _, [] -> None
+  | p::ps, v::vs -> (
+    match pattern_match p v with
+    | Some lst -> pattern_match_list (lst@stack) ps vs
+    | None -> None
+  );
+;;
+
 (* évaluation d'une expression en une valeur *)
 let rec eval value env = match value with 
   | Int k -> VI k
@@ -29,17 +48,25 @@ let rec eval value env = match value with
       | _ -> Boom
     )
   (*TODO : handle _*)
-  | Let(str, e1, e2, false) -> 
-    eval e2 ((str, eval e1 env)::env);
-  | Let(str, e1, e2, true) -> 
-    let v1 = eval e1 env in (
+  | Let(pat, e1, e2, false) -> 
+    let v1 = eval e1 env in
+    let pat_list = pattern_match pat v1 in 
+    (
+      match pat_list with 
+      | None -> Boom
+      | Some plst -> 
+        eval e2 (plst@env)
+    );
+  | Let(_pat, _e1, _e2, true) -> Boom;
+  (*TODO : force pat to be a val only for now*)
+    (*let v1 = eval e1 env in (
       match v1 with
       | VF(env, name, expr) -> (
           let rec new_env = ((str, VF(new_env, name, expr))::env) in
           eval e2 new_env;
         )
       | _v1 -> Boom;
-    )
+    )*)
     
   | Fun(str, e) -> VF(env, str, e)
   | Unit -> VU

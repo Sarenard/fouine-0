@@ -9,12 +9,32 @@ type expr =
   | Bang of string
   | Assign of string*expr
   | If of expr*expr*expr
-  | Let of string*expr*expr*bool (*true = recursive*)
+  | Let of pattern*expr*expr*bool (*true = recursive*)
   | Fun of string*expr
   | App of expr*expr
   | Tuple of expr list
   | Op of string*expr*expr
   | Seq of expr*expr
+
+and pattern = 
+  | PTuple of pattern list
+  | PBool of bool
+  | PInt of int
+  | PVar of string
+;;
+
+let rec affiche_pattern pat = match pat with
+  | PBool b -> 
+    print_bool b;
+  | PInt i -> 
+    print_int i;
+  | PVar s -> 
+    print_string s;
+  | PTuple l ->
+    print_string "P(";
+    List.iter (fun x -> affiche_pattern x; print_string ", ") l;
+    print_string ")"
+;;
 
 let rec affiche_expr e =
   let aff_aux s a b = 
@@ -48,9 +68,9 @@ let rec affiche_expr e =
 	  print_string ", ";
     affiche_expr e3;
     print_string ")";)
-  | Let(x, e2, e3, recursive) ->
+  | Let(pat, e2, e3, recursive) ->
     (print_string "Let(";
-    print_string x;
+    affiche_pattern pat;
 	  print_string ", ";
     affiche_expr e2;
 	  print_string ", ";
@@ -100,8 +120,7 @@ and heap = {
   array: valeur array;
   mutable last_free: int;
   size: int;
-};;
-
+}
 
 let rec affiche_val v = 
   match v with 

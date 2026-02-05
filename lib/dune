@@ -1,5 +1,7 @@
 (library
- (name lib))
+ (name lib)
+ (flags (:standard -warn-error -27))
+)
 
 (menhir
  (flags --dump) ;  (flags --dump --trace) pour voir l'exécution de l'automate

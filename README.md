@@ -30,6 +30,7 @@ python tests/test.py
 1. (Maya) begin end
 2. (Sarah) Opérateurs buildins gérés correctement
 3. (Sarah) refs
+3. (Sarah) patterns dans les let
 ### Rendu 2
 
 ## Etapes à faire
@@ -39,10 +40,11 @@ python tests/test.py
 4. fonction avec unit en argument
 5. exceptions
 6. gérer les tuples sans parenthèses
-7. matchs
-8. listes
-9.  Erreurs
-10. types algébriques
+7. Gérer les patterns dans les fonctions
+8. matchs
+9. listes
+10. Erreurs
+11. types algébriques
 
 # Fun sideprojects done
 Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier de tests.

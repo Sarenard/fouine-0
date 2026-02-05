@@ -49,8 +49,8 @@ expression:
   | e1=expression AND e2=expression     { Op("&&", e1, e2) }
   | e1=expression EQ e2=expression     { Op("=", e1, e2) }
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
-  | LET e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
-  | LET REC e1=VAR EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
+  | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
+  | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
   | FUN args=VAR+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | MINUS e=expression                    { Op("-", Int 0, e) } (* le moins unaire *)
   | k=applic                          { k }
@@ -63,6 +63,17 @@ expression:
   | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
   (*TODO : a tuple is a tuple even without parentheses*)
   | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 
+
+pattern:
+  | i=INT {PInt i}
+  | b=BOOL {PBool b}
+  | LPAREN x=pattern RPAREN  { x } 
+  | LPAREN xs=pattern_list COMMA x=pattern RPAREN  { PTuple (xs @ [x]) } 
+  | s=VAR {PVar s}
+
+pattern_list:
+  | x = pattern { [x] }
+  | xs = pattern_list COMMA x = pattern {xs @ [x] }
 
 expr_list:
   | x=expression                        { [x] }
