@@ -40,12 +40,19 @@ let rec eval value env = match value with
       | (VB false) -> eval e3 env
       | _ -> Boom
     )
-  | App(e1, e2) ->
+  | App(e1, e2) -> 
     let v1, v2 = eval e1 env, eval e2 env in (
       match v1 with 
-      | VF(env, x, e) -> eval e (((x, v2))::env);
+      | VF(env, pattern, e) -> (
+        (*eval e (((x, v2))::env);*)
+        let pat_list = pattern_match pattern v2 in (
+          match pat_list with
+          | None -> Boom
+          | Some plst -> eval e (plst@env)
+        )
+      )
       | VF_buildin(func) -> (func heap env v2);
-      | _ -> Boom
+      | _ -> Boom;
     )
   (*TODO : handle _*)
   | Let(pat, e1, e2, false) -> 
@@ -62,15 +69,15 @@ let rec eval value env = match value with
     | PVar s -> (
         let v1 = eval e1 env in (
         match v1 with
-        | VF(env, name, expr) -> (
-            let rec new_env = ((s, VF(new_env, name, expr))::env) in
+        | VF(env, pat, expr) -> (
+            let rec new_env = ((s, VF(new_env, pat, expr))::env) in
             eval e2 new_env;
           )
         | _v1 -> Boom;
       ))
     | _ -> Boom (*not implemented yet*)
   )
-  | Fun(str, e) -> VF(env, str, e)
+  | Fun(pat, e) -> VF(env, pat, e)
   | Op (name, e1, e2) -> (
     let func = match name with
       | "+" -> opint env ( + )

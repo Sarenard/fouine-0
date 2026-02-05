@@ -51,7 +51,7 @@ expression:
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
   | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
   | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
-  | FUN args=VAR+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
+  | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | MINUS e=expression                    { Op("-", Int 0, e) } (* le moins unaire *)
   | k=applic                          { k }
   | LPAREN RPAREN                    { Tuple [] }
@@ -90,3 +90,4 @@ sexpr:
   | b=BOOL {Bool b}
   | BANG s=VAR { Bang(s) }
   | s=VAR {String s}
+  | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 

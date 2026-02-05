@@ -9,7 +9,7 @@ type expr =
   | Assign of string*expr
   | If of expr*expr*expr
   | Let of pattern*expr*expr*bool (*true = recursive*)
-  | Fun of string*expr
+  | Fun of pattern*expr
   | App of expr*expr
   | Tuple of expr list
   | Op of string*expr*expr
@@ -77,9 +77,9 @@ let rec affiche_expr e =
     print_string ", ";
     print_bool recursive;
     print_string ")";)
-  | Fun(x, e) -> (
+  | Fun(pat, e) -> (
     print_string "Fun(";
-    print_string x;
+    affiche_pattern pat;
 	  print_string ", ";
     affiche_expr e;
     print_string ")";)
@@ -105,7 +105,7 @@ type valeur =
   | VI of int
   | VR of int
   | VB of bool
-  | VF of env*string*expr
+  | VF of env*pattern*expr
   (*Thx zoé for the idea*)
   | VF_buildin of (heap -> env -> valeur -> valeur)
   | VT of valeur list
@@ -129,9 +129,9 @@ let rec affiche_val v =
     print_string ")";
   | VI k -> print_int k
   | VB k -> print_bool k
-  | VF (_env, x, e) -> 
+  | VF (_env, pat, e) -> 
     print_string "F(";
-    print_string x;
+    affiche_pattern pat;
     print_string ", ";
     affiche_expr e; 
     print_string ")";
