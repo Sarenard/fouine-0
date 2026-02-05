@@ -57,17 +57,19 @@ let rec eval value env = match value with
       | Some plst -> 
         eval e2 (plst@env)
     );
-  | Let(_pat, _e1, _e2, true) -> Boom;
-  (*TODO : force pat to be a val only for now*)
-    (*let v1 = eval e1 env in (
-      match v1 with
-      | VF(env, name, expr) -> (
-          let rec new_env = ((str, VF(new_env, name, expr))::env) in
-          eval e2 new_env;
-        )
-      | _v1 -> Boom;
-    )*)
-    
+  | Let(pat, e1, e2, true) -> (match pat with
+    (*force pat to be a val only for now*)
+    | PVar s -> (
+        let v1 = eval e1 env in (
+        match v1 with
+        | VF(env, name, expr) -> (
+            let rec new_env = ((s, VF(new_env, name, expr))::env) in
+            eval e2 new_env;
+          )
+        | _v1 -> Boom;
+      ))
+    | _ -> Boom (*not implemented yet*)
+  )
   | Fun(str, e) -> VF(env, str, e)
   | Unit -> VU
   | Op (name, e1, e2) -> (
