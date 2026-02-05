@@ -1,1 +1,1 @@
-if false then prInt 1 else prInt 0
+if false then prInt 1 else prInt 0;;

@@ -41,7 +41,7 @@ def main():
     prog_def = bf_to_prog_fun(bf_src)
 
     if args.standalone:
-        full = f"{compress_one_line(RUNBF_PRELUDE)} {prog_def} in runbf prog"
+        full = f"{compress_one_line(RUNBF_PRELUDE)} {prog_def} in runbf prog;;"
         out = compress_one_line(full) + "\n"
     else:
         # juste la fonction prog (à coller après ton runbf)

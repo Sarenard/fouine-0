@@ -1,1 +1,1 @@
-let rec f = (fun x -> if x = 0 then 1 else f (x-1)) in f 10
+let rec f = (fun x -> if x = 0 then 1 else f (x-1)) in f 10;;

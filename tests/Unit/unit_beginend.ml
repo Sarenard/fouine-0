@@ -1,1 +1,1 @@
-if begin end = () then prInt 1 else prInt 2
+if begin end = () then prInt 1 else prInt 2;;

@@ -11,9 +11,9 @@ let var = ['a'-'z' '_']['a'-'z' 'A'-'Z' '0'-'9' '_' '\'']*
 let bool = "true"|"false"
                
 rule token = parse    (* la "fonction" aussi s'appelle token .. *)
-  | [' ' '\t']     { token lexbuf }    (* on saute les blancs et les tabulations *)
+  | [' ' '\n' '\t']     { token lexbuf }    (* on saute les blancs et les tabulations *)
    	     	   	               (*   en faisant cet appel récursif à "token" *)
-  | '\n'            { EOL }   (*EndOfLine ; à noter que la fin de fichier se note "eof" *)
+  | ";;"             { SEQQ }
   | '+'             { PLUS }
   | '*'             { TIMES }
   | '-'             { MINUS }

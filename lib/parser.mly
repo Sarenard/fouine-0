@@ -4,13 +4,12 @@ open Expr
 
 /* PARTIE 2, on liste les lexèmes (lien avec le fichier lexer.mll) ******* */                                   
 %token EQ
-%token BANG ASSIGN SEQ
+%token BANG ASSIGN SEQ SEQQ
 %token OR AND
 %token PLUS TIMES MINUS
 %token BEGIN END
 %token LPAREN RPAREN COMMA
 %token LET IF THEN ELSE IN FUN ARROW REC
-%token EOL             /* EOL = End Of Line, retour à la ligne */
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
 %token <string> VAR
@@ -35,7 +34,7 @@ open Expr
 %%
 
 main:                       /* <- le point d'entrée (cf. + haut, "start") */
-e=expression EOL { e }  /* on reconnaît une expression suivie de "EndOfLine", on la renvoie telle quelle */
+e=expression SEQQ { e }  /* on reconnaît une expression suivie de "EndOfLine", on la renvoie telle quelle */
 
 
 /* règles de grammaire pour les expressions ; le non-terminal s'appelle "expression" */                                                                                

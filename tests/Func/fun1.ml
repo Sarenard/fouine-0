@@ -1,1 +1,1 @@
-prInt ((fun x -> x+1) 2)
+prInt ((fun x -> x+1) 2);;

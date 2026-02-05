@@ -1,1 +1,1 @@
-if () = () then prInt 1 else prInt 0
+if () = () then prInt 1 else prInt 0;;
