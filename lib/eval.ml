@@ -11,7 +11,7 @@ let rec pattern_match (pat: pattern) (value: valeur) : ((string*valeur) list) op
  = match (pat, value) with
   | (PInt k1, VI k2) when k1 = k2 -> Some []
   | (PBool b1, VB b2) when b1 = b2 -> Some []
-  | (PVar x, value) -> Some [(x,value)]
+  | (PVar x, value) -> if x = "_" then Some [] else Some [(x,value)]
   | (PTuple patlist, VT valuelist) ->
     pattern_match_list [] patlist valuelist
   | _ -> None
