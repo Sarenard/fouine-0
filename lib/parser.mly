@@ -9,6 +9,7 @@ open Expr
 %token PLUS TIMES MINUS
 %token BEGIN END
 %token LPAREN RPAREN COMMA
+%token MATCH WITH PIPE
 %token LET IF THEN ELSE IN FUN ARROW REC
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
@@ -16,7 +17,9 @@ open Expr
 
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
-%nonassoc ELSE IN ARROW
+%nonassoc ELSE IN ARROW  
+%nonassoc below_PIPE
+%left PIPE
 %left EQ
 %right AND
 %right OR
@@ -39,8 +42,8 @@ main:
 /* règles de grammaire pour les expressions ; le non-terminal s'appelle "expression" */                                                                                
 expression:			   
    /* on appelle i l'attribut associé à INT */
-  | controwlflow {$1}
   | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
+  | controwlflow {$1}
 
 controwlflow:
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
@@ -48,7 +51,19 @@ controwlflow:
   | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | s=VAR ASSIGN e=expression                { Assign(s, e) }
+  | MATCH e=expression WITH m=match_inner {Match(e, m)}
   | operator {$1}
+
+match_inner:
+  | first = match_first rest = match_rest {first :: rest}
+
+match_first:
+  | PIPE p=pattern ARROW e=expression {(p,e)}
+  | p=pattern ARROW e=expression {(p,e)}
+
+match_rest:
+  | %prec below_PIPE {[]} (*weird precedence*)
+  | PIPE p=pattern ARROW e=expression lst=match_rest {(p,e)::lst}
 
 operator:
   | e1=operator OR e2=operator     { Op("||", e1, e2) }

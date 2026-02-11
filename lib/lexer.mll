@@ -36,6 +36,9 @@ rule token = parse    (* la "fonction" aussi s'appelle token .. *)
   | ";"             { SEQ }
   | "!"             { BANG }
   | ":="             { ASSIGN }
+  | "match"             { MATCH }
+  | "with"             { WITH }
+  | "|"             { PIPE }
   | bool as b { BOOL (bool_of_string b)}
   | nombre as s { INT (int_of_string s) }
   | var as s { VAR s }
