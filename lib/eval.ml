@@ -114,6 +114,7 @@ let rec eval value env = match value with
     | VR k -> (heap.array.(k) <- eval e env); VU
     | _ -> Boom)
   | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
+  | Match(_e, _lst) -> Boom
 
 and opint env func e1 e2 = 
   let v2 = (eval e2 env) in let v1 = (eval e1 env) in

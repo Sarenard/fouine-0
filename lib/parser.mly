@@ -39,55 +39,55 @@ main:
 /* règles de grammaire pour les expressions ; le non-terminal s'appelle "expression" */                                                                                
 expression:			   
    /* on appelle i l'attribut associé à INT */
-  | i=INT                             { Int i }
-  | b=BOOL                             { Bool b }
-  | s=VAR                             { String s }
-  | e1=expression PLUS e2=expression      { Op("+", e1, e2) }
-  | e1=expression TIMES e2=expression     { Op("*", e1, e2) }
-  | e1=expression MINUS e2=expression     { Op("-", e1, e2) }
-  | e1=expression OR e2=expression     { Op("||", e1, e2) }
-  | e1=expression AND e2=expression     { Op("&&", e1, e2) }
-  | e1=expression EQ e2=expression     { Op("=", e1, e2) }
+  | controwlflow {$1}
+  | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
+
+controwlflow:
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
   | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
   | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
-  | MINUS e=expression                    { Op("-", Int 0, e) } (* le moins unaire *)
-  | k=applic                          { k }
-  | LPAREN RPAREN                    { Tuple [] }
-  | BEGIN END                             { Tuple [] }
-  | BANG s=VAR                { Bang(s) }
   | s=VAR ASSIGN e=expression                { Assign(s, e) }
-  | BEGIN e=expression END                { e }
-  | LPAREN e=expression RPAREN            { e } 
-  | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
+  | operator {$1}
+
+operator:
+  | e1=operator OR e2=operator     { Op("||", e1, e2) }
+  | e1=operator AND e2=operator     { Op("&&", e1, e2) }
+  | e1=operator EQ e2=operator     { Op("=", e1, e2) }
+  | e1=operator PLUS e2=operator      { Op("+", e1, e2) }
+  | e1=operator MINUS e2=operator     { Op("-", e1, e2) }
+  | e1 = operator TIMES e2 = operator { Op("*", e1, e2) }
+  | MINUS e=operator { Op("-", Int 0, e)}
+  | e = applic { e }
+
+applic:
+  | e1=applic e2=expr_ident {App(e1, e2)}
+  | expr_ident {$1}
+
+expr_ident:
+  | i=INT {Int i}
+  | b=BOOL {Bool b}
+  | BANG s=VAR { Bang(s) }
+  | s=VAR {String s}
+  | LPAREN RPAREN                    { Tuple [] }
+  | LPAREN e=expression RPAREN {e}
   (*TODO : a tuple is a tuple even without parentheses*)
   | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 
+  | BEGIN END                             { Tuple [] }
+  | BEGIN e=expression END                { e }
+
+expr_list:
+  | x=expression                        { [x] }
+  | xs=expr_list COMMA x=expression     { xs @ [x] }
 
 pattern:
   | i=INT {PInt i}
   | b=BOOL {PBool b}
   | LPAREN x=pattern RPAREN  { x } 
-  | LPAREN RPAREN  { PTuple [] } 
+  | LPAREN RPAREN  { PTuple [] }
   | LPAREN xs=pattern_list COMMA x=pattern RPAREN  { PTuple (xs @ [x]) } 
   | s=VAR {PVar s}
 
 pattern_list:
   | x = pattern { [x] }
   | xs = pattern_list COMMA x = pattern {xs @ [x] }
-
-expr_list:
-  | x=expression                        { [x] }
-  | xs=expr_list COMMA x=expression     { xs @ [x] }
-
-applic:
-  | e1=applic e2=sexpr {App(e1, e2)}
-  | e1=sexpr e2=sexpr {App(e1, e2)}
-
-sexpr:
-  | LPAREN e=expression RPAREN {e}
-  | i=INT {Int i}
-  | b=BOOL {Bool b}
-  | BANG s=VAR { Bang(s) }
-  | s=VAR {String s}
-  | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 

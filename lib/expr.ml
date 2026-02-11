@@ -14,6 +14,7 @@ type expr =
   | Tuple of expr list
   | Op of string*expr*expr
   | Seq of expr*expr
+  | Match of expr*((pattern*expr) list)
 
 and pattern = 
   | PTuple of pattern list
@@ -51,6 +52,12 @@ let rec affiche_expr e =
   | String k -> print_string k
   | App(e1,e2) -> aff_aux "App(" e1 e2
   | Seq(e1,e2) -> aff_aux "Seq(" e1 e2
+  | Match(e1, lst) ->
+    print_string "Match(";
+    affiche_expr e1;
+    print_string ", [";
+    List.iter (fun (x, y) -> affiche_pattern x; print_string " -> "; affiche_expr y; print_string ", ") lst;
+    print_string "])";
   | Op(name, e1,e2) ->
     print_string "Op(";
     print_string name;
