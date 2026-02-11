@@ -114,7 +114,20 @@ let rec eval value env = match value with
     | VR k -> (heap.array.(k) <- eval e env); VU
     | _ -> Boom)
   | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
-  | Match(_e, _lst) -> Boom
+  | Match(e1, lst) ->
+    let v1 = eval e1 env in 
+    let rec search mylst = (
+      match mylst with 
+      | [] -> failwith "Pattern non trouvé !!";
+      | (p, e2)::xs -> 
+        let pm = pattern_match p v1 in (
+          match pm with
+          | None -> search xs
+          | Some plst -> eval e2 (plst@env)
+        )
+    )
+    in search lst;
+
 
 and opint env func e1 e2 = 
   let v2 = (eval e2 env) in let v1 = (eval e1 env) in
