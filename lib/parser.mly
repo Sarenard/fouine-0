@@ -6,11 +6,13 @@ open Expr
 %token EQ
 %token BANG ASSIGN SEQ SEQQ
 %token OR AND
-%token PLUS TIMES MINUS
+%token PLUS TIMES MINUS DIV
 %token BEGIN END
 %token LPAREN RPAREN COMMA
 %token MATCH WITH PIPE
 %token LET IF THEN ELSE IN FUN ARROW REC
+%token L LE G GE NE
+%token EOF
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
 %token <string> VAR
@@ -24,7 +26,7 @@ open Expr
 %right AND
 %right OR
 %left PLUS MINUS
-%left TIMES
+%left TIMES DIV
 %right SEQ
 %right ASSIGN
 
@@ -37,11 +39,16 @@ open Expr
 %%
 
 main:
-  | e=expression SEQQ { e }
+  | e=toplevel EOF { e }
+  | e=toplevel SEQQ EOF { e }
 
-/* règles de grammaire pour les expressions ; le non-terminal s'appelle "expression" */                                                                                
+toplevel:
+  | e1 = toplevel SEQQ e2 = expression {Seq(e1, e2)}
+  | LET e1=pattern EQ e2=expression SEQQ e3 = expression { Let(e1,e2,e3, false) }
+  | LET REC e1=pattern EQ e2=expression SEQQ e3=expression { Let(e1,e2,e3, true) }
+  | e = expression {e}
+
 expression:			   
-   /* on appelle i l'attribut associé à INT */
   | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
   | controwlflow {$1}
 
@@ -69,9 +76,15 @@ operator:
   | e1=operator OR e2=operator     { Op("||", e1, e2) }
   | e1=operator AND e2=operator     { Op("&&", e1, e2) }
   | e1=operator EQ e2=operator     { Op("=", e1, e2) }
+  | e1=operator DIV e2=operator      { Op("/", e1, e2) }
   | e1=operator PLUS e2=operator      { Op("+", e1, e2) }
   | e1=operator MINUS e2=operator     { Op("-", e1, e2) }
   | e1 = operator TIMES e2 = operator { Op("*", e1, e2) }
+  | e1 = operator L e2 = operator { Op("<", e1, e2) }
+  | e1 = operator LE e2 = operator { Op("<=", e1, e2) }
+  | e1 = operator G e2 = operator { Op(">", e1, e2) }
+  | e1 = operator GE e2 = operator { Op(">=", e1, e2) }
+  | e1 = operator NE e2 = operator { Op("<>", e1, e2) }
   | MINUS e=operator { Op("-", Int 0, e)}
   | e = applic { e }
 

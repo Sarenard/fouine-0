@@ -82,7 +82,12 @@ let rec eval value env = match value with
     let func = match name with
       | "+" -> opint env ( + )
       | "-" -> opint env ( - )
+      | "/" -> opint env ( / )
       | "*" -> opint env ( * )
+      | "<" -> opibool env ( < )
+      | "<=" -> opibool env ( <= )
+      | ">" -> opibool env ( > )
+      | ">=" -> opibool env ( >= )
       | "&&" -> fun e1 e2 -> (
         let v1 = eval e1 env in match v1 with
         | VB false -> VB false
@@ -99,8 +104,8 @@ let rec eval value env = match value with
           | _ -> Boom)
         | _ -> Boom
       ) 
-      (*wow thats strange, maybe i will want to change that ?*)
       | "=" -> (fun x y -> VB (compare_val (eval x env) (eval y env)))
+      | "<>" -> (fun x y -> VB (not (compare_val (eval x env) (eval y env))))
       | _ -> (fun _ _ -> Boom)
     in func e1 e2
     )
@@ -133,4 +138,10 @@ and opint env func e1 e2 =
   let v2 = (eval e2 env) in let v1 = (eval e1 env) in
     match (v1, v2) with
       | (VI x, VI y) -> (VI (func x y))
+      | _ -> Boom
+
+and opibool env func e1 e2 = 
+  let v2 = (eval e2 env) in let v1 = (eval e1 env) in
+    match (v1, v2) with
+      | (VI x, VI y) -> (VB (func x y))
       | _ -> Boom;;
