@@ -1,6 +1,6 @@
 (library
  (name lib)
- (flags (:standard -warn-error -27))
+ (flags (:standard -warn-error -26))
 )
 
 (menhir
