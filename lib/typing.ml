@@ -22,6 +22,10 @@ let rec infer (env : (var * ty) list) (v : var) (t: expr) : unif_pbm = match t w
       [(Tuvar v, Tbool); (Tuvar x1, Tuvar x2)]@u1@u2
     | _ -> raise UnimplementedError
   )
+  | Seq(e1, e2) ->
+    let x1 = new_uvar () in let x2 = new_uvar () in
+    let u1 = infer env x1 e1 in let u2 = infer env x2 e2 in
+    [(Tuvar x1, Tprod []); (Tuvar v, Tuvar x2)]@u1@u2
   | Int _ -> [(Tuvar v, Tint)]
   | Bool _ -> [(Tuvar v, Tbool)]
   | Tuple exprlst -> 
