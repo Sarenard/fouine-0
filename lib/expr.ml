@@ -204,6 +204,7 @@ type var = string
 type ty = 
   | Tint 
   | Tbool
+  | Tprod of ty list
   | Tuvar of var
   | Tarr of ty * ty 
 
@@ -216,6 +217,8 @@ let rec string_of_ty ty =
   | Tint -> "int"
   | Tbool -> "bool"
   | Tuvar v -> v
+  | Tprod lst ->
+    "(" ^ String.concat " * " (List.map string_of_ty lst) ^ ")"
   | Tarr (t1, t2) ->
       "(" ^ string_of_ty t1 ^ " -> " ^ string_of_ty t2 ^ ")"
 
@@ -223,3 +226,15 @@ let rec print_sub = function
   | [] -> ()
   | (v,t)::q -> let _ = (Printf.printf "%s = %s\n" v (string_of_ty t);) in
     print_sub q
+
+let print_pbm (pbm : unif_pbm) =
+  let i = ref 0 in
+  List.iter (fun (t1, t2) ->
+    incr i;
+    Printf.printf "  [%d] %s  =  %s\n" !i (string_of_ty t1) (string_of_ty t2)
+  ) pbm
+;;
+
+let empty_env_type = [
+  ("prInt", Tarr(Tint, Tint));
+]
