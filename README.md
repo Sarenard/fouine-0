@@ -37,13 +37,14 @@ python tests/test.py
 7. (Sarah) Gérer les patterns dans les fonctions
 8. (Sarah) Faire tout les opérateurs buildins
 9. (Sarah) Let sans in au toplevel
+10. (Sarah) Typage monomorphe des entiers et booléens
 ### Rendu 2
 
 ## Etapes à faire
 1. Gérer les tuples sans parenthèses
 2. Listes
 3. Erreurs
-4. Typage
+4. Meilleur typage
 5. Types algébriques
 
 # Fun sideprojects done

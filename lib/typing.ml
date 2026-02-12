@@ -13,6 +13,7 @@ let rec infer (env : (var * ty) list) (v : var) (t: expr) : unif_pbm = match t w
     let u1 = infer env x1 t1 in let u2 = infer env x2 t2 in
     [(Tuvar v, Tint); (Tuvar x1, Tint); (Tuvar x2, Tint)]@u1@u2
   | Int _ -> [(Tuvar v, Tint)]
+  | Bool _ -> [(Tuvar v, Tbool)]
   | String v1 -> let tv =
       try List.assoc v1 env
       with Not_found -> raise Not_inferable;
@@ -41,14 +42,14 @@ let rec infer (env : (var * ty) list) (v : var) (t: expr) : unif_pbm = match t w
 (*Indique si une variable apparait dans ce qui existe déjà*)
 let rec appear (x : var) (term : ty) : bool =
   match term with
-  | Tint -> false
+  | Tint | Tbool -> false
   | Tuvar y -> x = y
   | Tarr(t1, t2) -> appear x t1 || appear x t2
 
 (*Effectue la substitution sigma(term) = term[new_x/x] *)
 let rec replace ((x, new_x) : var * ty) (term : ty) : ty =
   match term with
-  | Tint -> Tint
+  | Tint | Tbool -> term
   | Tuvar y when y = x -> new_x
   | Tuvar _ -> term
   | Tarr(t1, t2) -> Tarr(
@@ -69,7 +70,7 @@ let unify (pb : unif_pbm) : subst =
       let t2 = apply_subst sb t2 in
       if t1 = t2 then unify_aux rest sb else
         match (t1, t2) with
-        | (Tint, Tint) ->
+        | (Tint, Tint) | (Tbool, Tbool) ->
             unify_aux rest sb
 
         | (Tarr (a1, b1), Tarr (a2, b2)) ->
@@ -122,4 +123,3 @@ let typer (t : expr) (debug: bool) =
 let main (expression : Expr.expr) (debug: bool) : subst option = 
   typer expression debug
 ;;
-  

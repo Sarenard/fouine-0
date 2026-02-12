@@ -203,6 +203,7 @@ type var = string
 
 type ty = 
   | Tint 
+  | Tbool
   | Tuvar of var
   | Tarr of ty * ty 
 
@@ -213,6 +214,7 @@ type subst = (var * ty) list
 let rec string_of_ty ty =
   match ty with
   | Tint -> "int"
+  | Tbool -> "bool"
   | Tuvar v -> v
   | Tarr (t1, t2) ->
       "(" ^ string_of_ty t1 ^ " -> " ^ string_of_ty t2 ^ ")"

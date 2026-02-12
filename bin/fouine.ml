@@ -2,14 +2,11 @@ open Lib
 
 let nom_fichier = ref ""
 let debug = ref false
-(*this is temporary*)
-let typage = ref false
 
 let recupere_entree () =
   Arg.parse (* ci-dessous les 3 arguments de Arg.parse : *)
     [
       ("-d", Arg.Set debug, "Mode debug");
-      ("-t", Arg.Set typage, "Typage");
     ] (* la liste des options, vide *)
     (fun s -> nom_fichier := s) (* la fonction a declencher lorsqu'on recupere un string qui n'est pas une option : ici c'est le nom du fichier, et on stocke cette information dans la reference nom_fichier *)
     ""; (* le message d'accueil, qui est vide *)
