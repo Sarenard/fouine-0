@@ -5,3 +5,5 @@ exception PatternUnmatched;;
 exception LetRecWronglyFormed;;
 (*Should go away*)
 exception UnimplementedError;;
+exception Not_unifyable;;
+exception Not_inferable;;

@@ -9,13 +9,10 @@ let recupere_entree () =
   Arg.parse (* ci-dessous les 3 arguments de Arg.parse : *)
     [
       ("-d", Arg.Set debug, "Mode debug");
-      ("-t", Arg.Set typage, "Test du typage");
+      ("-t", Arg.Set typage, "Typage");
     ] (* la liste des options, vide *)
     (fun s -> nom_fichier := s) (* la fonction a declencher lorsqu'on recupere un string qui n'est pas une option : ici c'est le nom du fichier, et on stocke cette information dans la reference nom_fichier *)
     ""; (* le message d'accueil, qui est vide *)
-  if !typage then
-    (Typing.main ())
-  else
   try
     let where_from = match !nom_fichier with
       | "" -> stdin
@@ -30,6 +27,7 @@ let recupere_entree () =
 let run () =
   try
     let saisie = recupere_entree () in
+    let _typed = Typing.main saisie (!debug) in
     let _ = if !debug then (Expr.affiche_expr saisie; print_newline ()) else () in
     let out = Eval.eval saisie Expr.empty_env in
     let _ = if !debug then (Expr.affiche_val out; print_newline ()) else () in
@@ -37,4 +35,3 @@ let run () =
   with e -> raise e
 
 let _ = run ()
-

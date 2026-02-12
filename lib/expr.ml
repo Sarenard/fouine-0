@@ -156,6 +156,7 @@ let rec compare_val val1 val2 = match (val1, val2) with
   | (VB k1,VB k2) -> (k1 = k2)
   | (VI k1,VI k2) -> (k1 = k2)
   | (VT lst1, VT lst2) -> compare_tuple compare_val lst1 lst2
+  (*what about refs?*)
   | _ -> false
 
 let print_env env = List.iter (fun (x, e) ->
@@ -196,3 +197,27 @@ let empty_env = [
   ("prInt", (VF_buildin prInt));
   ("ref", (VF_buildin ref_buildin));
 ]
+
+(*Typing stuff*)
+type var = string
+
+type ty = 
+  | Tint 
+  | Tuvar of var
+  | Tarr of ty * ty 
+
+type unif_pbm = (ty*ty) list
+ 
+type subst = (var * ty) list
+
+let rec string_of_ty ty =
+  match ty with
+  | Tint -> "int"
+  | Tuvar v -> v
+  | Tarr (t1, t2) ->
+      "(" ^ string_of_ty t1 ^ " -> " ^ string_of_ty t2 ^ ")"
+
+let rec print_sub = function
+  | [] -> ()
+  | (v,t)::q -> let _ = (Printf.printf "%s = %s\n" v (string_of_ty t);) in
+    print_sub q
