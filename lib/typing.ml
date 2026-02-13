@@ -70,13 +70,24 @@ let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pb
     let u = infer env' a2 body in
     (Tuvar v, Tarr (ptype, Tuvar a2)) :: u
   (*not 100% sure is correct*)
-  | Let (pattern, t1, t2, false) ->
+  | Let (pattern, t1, t2, false) (*not rec*) ->
     let a1 = new_uvar () in
-    let u1 = infer env a1 t1 in
     let (ptype, bindings) = pattern_to_ty pattern in
     let env' = bindings @ env in
+    let u1 = infer env a1 t1 in
     let u2 = infer env' v t2 in
     (Tuvar a1, ptype) :: u1 @ u2
+  | Let (pattern, t1, t2, true) (*rec*) -> (
+    match pattern with
+    | PVar s -> (
+        let a1 = new_uvar () in
+        let env' = (s, ([], Tuvar a1))::env in
+        let u1 = infer env' a1 t1 in
+        let u2 = infer env' v t2 in
+        u1 @ u2
+      )
+    | _ -> raise Unreachable
+  )
   | If (e1, e2, e3) ->
     let a1 = new_uvar () in
     let a2 = new_uvar () in
@@ -96,11 +107,6 @@ let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pb
         let u2 = infer env' v exp in
         (Tuvar a1, ptype) :: (Tuvar newvar, Tuvar v) :: u2
     ) lst in constraints @ u1
-  | expr -> 
-    print_string "Erreur, expr inconnue dans le typage :\n";
-    affiche_expr expr;
-    print_string "\n";
-    raise UnimplementedError;;
 
 (*Indique si une variable apparait dans ce qui existe déjà*)
 let rec appear (x : var) (term : ty) : bool =
