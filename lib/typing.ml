@@ -192,7 +192,7 @@ let typer (t : expr) (debug: bool) =
         if debug then (
           Printf.printf "Type inféré : %s\n\n" (string_of_ty ty_v0);
         );
-        Some sub
+        sub
       with Not_unifyable ->
         Printf.printf "Not Unifyable.\n";
         Printf.printf "Constraints (pbm):\n";
@@ -201,9 +201,9 @@ let typer (t : expr) (debug: bool) =
         raise Not_unifyable
     with e ->
       Printf.printf "Error : uncaught exception '%s'.\n\n" (Printexc.to_string e);
-      None
+      raise Not_unifyable
   end
 
-let main (expression : Expr.expr) (debug: bool) : subst option = 
+let main (expression : Expr.expr) (debug: bool) : subst = 
   typer expression debug
 ;;

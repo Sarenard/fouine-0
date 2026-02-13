@@ -4,7 +4,7 @@ import os
 
 prelude = "let prInt x = print_int x;print_newline(); x;;"
 
-def test(file):
+def test_ok(file):
     err = False
     with open(file, "r") as f:
         with open("tests/temp.ml", "w") as tf:
@@ -47,6 +47,24 @@ def test(file):
         cprint(f"Error in {file}", "red")
     return False
 
+def test_should_fail(file):
+    with open(file, "r") as f:
+        fouine_result = subprocess.run(
+            ["./_build/default/bin/fouine.exe"],
+            stdin=f,
+            capture_output=True,
+            text=True,
+        )
+
+    ok = fouine_result.stderr != "" or fouine_result.returncode != 0
+
+    if ok:
+        cprint(f"Test {file} passed", "green")
+    else:
+        cprint(f"No error in {file}", "red")
+
+    return ok
+
 
 cprint("Building Project", "green")
 try:
@@ -60,16 +78,33 @@ cprint("Project successfuly build", "green")
 cprint("")
 
 ml_files = [
-    os.path.join(root, f) for root, dirs, files in os.walk("tests")
-    for f in files if f.endswith(".ml") and f != "temp.ml"
+    os.path.join(root, f)
+    for root, dirs, files in os.walk("tests")
+    for f in files
+    if f.endswith(".ml")
+    and f != "temp.ml"
+    and "ShouldFail" not in root.split(os.sep)
 ]
+
+should_fail_files = [
+    os.path.join(root, f)
+    for root, dirs, files in os.walk("tests")
+    for f in files
+    if f.endswith(".ml")
+    and f != "temp.ml"
+    and "ShouldFail" in root.split(os.sep)
+]
+
+nb_test = len(ml_files) + len(should_fail_files)
 
 total = 0
 for file in ml_files:
-    total += test(file)
+    total += test_ok(file)
+for file in should_fail_files:
+    total += test_should_fail(file)
 
 print()
-if total == len(ml_files):
+if total == nb_test:
     cprint(f"All {total} test passed !!", "green")
 else:
-    cprint(f"Some tests didnt pass : ({total}/{len(ml_files)} correct).", "red")
+    cprint(f"Some tests didnt pass : ({total}/{nb_test} correct).", "red")
