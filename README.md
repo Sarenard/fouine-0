@@ -38,14 +38,16 @@ python tests/test.py
 8. (Sarah) Faire tout les opérateurs buildins
 9. (Sarah) Let sans in au toplevel
 10. (Sarah) Typage monomorphe des entiers et booléens
+11. (Sarah) Typage (tout sauf les weaks)
 ### Rendu 2
 
 ## Etapes à faire
 1. Gérer les tuples sans parenthèses
 2. Listes
 3. Erreurs
-4. Meilleur typage
+4. Typage avec weaks
 5. Types algébriques
+6. Continuiations
 
 # Fun sideprojects done
 Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier de tests.
