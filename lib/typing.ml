@@ -7,7 +7,7 @@ let new_uvar = fun () ->
   let v = "X"^(string_of_int !uvar_number) in
   (incr uvar_number; v);;
 
-let rec infer (env : (var * ty) list) (v : var) (t: expr) : unif_pbm = match t with
+let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pbm = match t with
 | Op(op, t1, t2) -> (
     let x1 = new_uvar () in let x2 = new_uvar () in
     let u1 = infer env x1 t1 in let u2 = infer env x2 t2 in
@@ -34,15 +34,18 @@ let rec infer (env : (var * ty) list) (v : var) (t: expr) : unif_pbm = match t w
       List.concat (List.map2 (fun vi ei -> infer env vi ei) vars exprlst)
     in
     (Tuvar v, Tprod (List.map (fun vi -> Tuvar vi) vars)) :: cs_elems
-  | String v1 -> let tv =
-      try List.assoc v1 env
-      with Not_found -> raise Not_inferable;
-    in
-    [ (Tuvar v, tv) ]
+  | String v1 -> (
+      match List.assoc_opt v1 env with
+      | None -> raise Not_inferable;
+      | Some (lstargs, rty) -> 
+        let sb = List.map (fun polyvar -> (polyvar, Tuvar (new_uvar ()))) lstargs in
+        let newty = replace_polyvar sb rty in
+        [ (Tuvar v, newty) ]
+    )
   | Fun (PVar x, body) ->
     let a1 = new_uvar () in
     let a2 = new_uvar () in
-    let env' = (x, Tuvar a1) :: env in
+    let env' = (x, ([], Tuvar a1)) :: env in
     let u = infer env' a2 body in
     (Tuvar v, Tarr (Tuvar a1, Tuvar a2)) :: u
   | App (t1, t2) ->
@@ -54,7 +57,7 @@ let rec infer (env : (var * ty) list) (v : var) (t: expr) : unif_pbm = match t w
   | Let (PVar x, t1, t2, false) ->
     let a1 = new_uvar () in
     let u1 = infer env a1 t1 in
-    let env' = (x, Tuvar a1) :: env in
+    let env' = (x, ([], Tuvar a1)) :: env in
     let u2 = infer env' v t2 in
     u1 @ u2
   | If (e1, e2, e3) ->
@@ -70,17 +73,19 @@ let rec infer (env : (var * ty) list) (v : var) (t: expr) : unif_pbm = match t w
 (*Indique si une variable apparait dans ce qui existe déjà*)
 let rec appear (x : var) (term : ty) : bool =
   match term with
-  | Tint | Tbool -> false
+  | Tint | Tbool | Tpolyvar _ -> false
   | Tuvar y -> x = y
+  | Tref t -> appear x t
   | Tprod lst -> List.exists (appear x) lst
   | Tarr(t1, t2) -> appear x t1 || appear x t2
 
 (*Effectue la substitution sigma(term) = term[new_x/x] *)
 let rec replace ((x, new_x) : var * ty) (term : ty) : ty =
   match term with
-  | Tint | Tbool -> term
+  | Tint | Tbool | Tpolyvar _ -> term
   | Tuvar y when y = x -> new_x
   | Tuvar _ -> term
+  | Tref t -> Tref (replace (x, new_x) t);
   | Tprod lst -> Tprod (List.map (replace (x, new_x)) lst)
   | Tarr(t1, t2) -> Tarr(
     replace (x, new_x) t1,

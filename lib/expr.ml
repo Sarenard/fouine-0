@@ -1,4 +1,5 @@
 open Util
+open Exceptions
 
 (*expressions*)
 type expr =
@@ -206,7 +207,9 @@ type ty =
   | Tbool
   | Tprod of ty list
   | Tuvar of var
+  | Tpolyvar of var
   | Tarr of ty * ty 
+  | Tref of ty
 
 type unif_pbm = (ty*ty) list
  
@@ -217,6 +220,8 @@ let rec string_of_ty ty =
   | Tint -> "int"
   | Tbool -> "bool"
   | Tuvar v -> v
+  | Tpolyvar v -> "PV(" ^ v ^ ")"
+  | Tref v -> "Ref(" ^ (string_of_ty v) ^ ")"
   | Tprod lst ->
     "(" ^ String.concat " * " (List.map string_of_ty lst) ^ ")"
   | Tarr (t1, t2) ->
@@ -226,6 +231,7 @@ let rec print_sub = function
   | [] -> ()
   | (v,t)::q -> let _ = (Printf.printf "%s = %s\n" v (string_of_ty t);) in
     print_sub q
+;;
 
 let print_pbm (pbm : unif_pbm) =
   let i = ref 0 in
@@ -235,6 +241,22 @@ let print_pbm (pbm : unif_pbm) =
   ) pbm
 ;;
 
+let rec replace_polyvar (sb : subst) (term: ty) : ty = 
+  match term with
+  | Tint | Tbool | Tuvar _ -> term
+  | Tref t -> Tref (replace_polyvar sb t)
+  | Tpolyvar w -> (
+      match List.assoc_opt w sb with
+      | None -> raise FreePolyVar
+      | Some t -> t
+    )
+  | Tprod lst -> Tprod (List.map (fun t -> replace_polyvar sb t) lst)
+  | Tarr(t1, t2) -> Tarr(
+      replace_polyvar sb t1,
+      replace_polyvar sb t2
+    )
+
 let empty_env_type = [
-  ("prInt", Tarr(Tint, Tint));
+  ("prInt", ([], Tarr(Tint, Tint)));
+  ("ref", (["Y0"], Tarr(Tpolyvar("Y0"), Tref(Tpolyvar("Y0")))));
 ]
