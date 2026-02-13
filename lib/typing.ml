@@ -85,6 +85,17 @@ let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pb
     let u2 = infer env a2 e2 in
     let u3 = infer env a3 e3 in
     [(Tuvar a1, Tbool); (Tuvar v, Tuvar a2); (Tuvar a2, Tuvar a3)]@u1@u2@u3
+  | Match (expr, lst) ->
+    let a1 = new_uvar () in
+    let u1 = infer env a1 expr in
+    let constraints = List.concat_map (
+      fun (pat, exp) ->
+        let (ptype, bindings) = pattern_to_ty pat in
+        let env' = bindings @ env in
+        let newvar = new_uvar () in
+        let u2 = infer env' v exp in
+        (Tuvar a1, ptype) :: (Tuvar newvar, Tuvar v) :: u2
+    ) lst in constraints @ u1
   | expr -> 
     print_string "Erreur, expr inconnue dans le typage :\n";
     affiche_expr expr;
