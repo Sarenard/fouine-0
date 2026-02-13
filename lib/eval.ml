@@ -111,10 +111,6 @@ let rec eval value env = match value with
     in func e1 e2
     )
   | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))
-  | Bang(s) -> 
-    let v = eval (String s) env in (match v with
-    | VR k -> heap.array.(k)
-    | _ -> raise WrongType)
   | Assign(s, e) -> 
     let v = eval (String s) env in (match v with
     | VR k -> (heap.array.(k) <- eval e env); VU
@@ -146,3 +142,4 @@ and opibool env func e1 e2 =
     match (v1, v2) with
       | (VI x, VI y) -> (VB (func x y))
       | _ -> raise WrongType;;
+

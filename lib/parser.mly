@@ -96,7 +96,7 @@ applic:
 expr_ident:
   | i=INT {Int i}
   | b=BOOL {Bool b}
-  | BANG s=VAR { Bang(s) }
+  | BANG s=VAR { App(String "!", String s) }
   | s=VAR {String s}
   | LPAREN RPAREN                    { Tuple [] }
   | LPAREN e=expression RPAREN {e}

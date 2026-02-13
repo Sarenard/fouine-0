@@ -107,8 +107,12 @@ let unify (pb : unif_pbm) : subst =
         match (t1, t2) with
         | (Tint, Tint) | (Tbool, Tbool) ->
             unify_aux rest sb
+          
         | (Tprod l1, Tprod l2) when List.length l1 = List.length l2 ->
             unify_aux (List.combine l1 l2 @ rest) sb
+
+        | (Tref a, Tref b) ->
+          unify_aux ((a, b)::rest) sb
 
         | (Tarr (a1, b1), Tarr (a2, b2)) ->
             unify_aux ((a1, a2) :: (b1, b2) :: rest) sb
@@ -126,8 +130,7 @@ let unify (pb : unif_pbm) : subst =
         | (ty, Tuvar x) ->
             unify_aux ((Tuvar x, ty) :: rest) sb
 
-        | _ ->
-            raise Not_unifyable
+        | _ -> raise UnimplementedError;
   in
   unify_aux pb []
 

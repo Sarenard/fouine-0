@@ -6,7 +6,6 @@ type expr =
   | Int of int
   | Bool of bool
   | String of string
-  | Bang of string
   | Assign of string*expr
   | If of expr*expr*expr
   | Let of pattern*expr*expr*bool (*true = recursive*)
@@ -96,10 +95,6 @@ let rec affiche_expr e =
     print_string x;
 	  print_string ", ";
     affiche_expr e;
-    print_string ")";)
-  | Bang(s) -> (
-    print_string "Bang(";
-    print_string s;
     print_string ")";)
   | Tuple(lst) -> (
     print_string "Tuple(";
@@ -194,9 +189,14 @@ let prInt _heap _env = function
 
 let ref_buildin heap _env value = VR (set_new value heap)
 
+let bang_buildin heap _env = function
+  | VR k -> heap.array.(k)
+  | _ -> raise WrongType
+
 let empty_env = [
   ("prInt", (VF_buildin prInt));
   ("ref", (VF_buildin ref_buildin));
+  ("!", (VF_buildin bang_buildin));
 ]
 
 (*Typing stuff*)
@@ -259,4 +259,5 @@ let rec replace_polyvar (sb : subst) (term: ty) : ty =
 let empty_env_type = [
   ("prInt", ([], Tarr(Tint, Tint)));
   ("ref", (["Y0"], Tarr(Tpolyvar("Y0"), Tref(Tpolyvar("Y0")))));
+  ("!", (["Y1"], Tarr(Tref(Tpolyvar("Y1")), Tpolyvar("Y1"))));
 ]
