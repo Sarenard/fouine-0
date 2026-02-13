@@ -3,7 +3,6 @@ open Expr
 %}
 
 /* PARTIE 2, on liste les lexèmes (lien avec le fichier lexer.mll) ******* */                                   
-%token EQ
 %token BANG ASSIGN SEQ SEQQ
 %token OR AND
 %token PLUS TIMES MINUS DIV
@@ -11,7 +10,7 @@ open Expr
 %token LPAREN RPAREN COMMA
 %token MATCH WITH PIPE
 %token LET IF THEN ELSE IN FUN ARROW REC
-%token L LE G GE NE
+%token L LE G GE NE EQ
 %token EOF
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
@@ -21,6 +20,8 @@ open Expr
 /* priorité plus grande sur une ligne située plus bas */
 %nonassoc ELSE IN ARROW  
 %nonassoc below_PIPE
+%nonassoc LE GE NE
+%nonassoc L G
 %left PIPE
 %left EQ
 %right AND
@@ -80,11 +81,11 @@ operator:
   | e1=operator PLUS e2=operator      { Op("+", e1, e2) }
   | e1=operator MINUS e2=operator     { Op("-", e1, e2) }
   | e1 = operator TIMES e2 = operator { Op("*", e1, e2) }
-  | e1 = operator L e2 = operator { Op("<", e1, e2) }
   | e1 = operator LE e2 = operator { Op("<=", e1, e2) }
-  | e1 = operator G e2 = operator { Op(">", e1, e2) }
   | e1 = operator GE e2 = operator { Op(">=", e1, e2) }
   | e1 = operator NE e2 = operator { Op("<>", e1, e2) }
+  | e1 = operator L e2 = operator { Op("<", e1, e2) }
+  | e1 = operator G e2 = operator { Op(">", e1, e2) }
   | MINUS e=operator { Op("-", Int 0, e)}
   | e = applic { e }
 
