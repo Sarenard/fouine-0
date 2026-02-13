@@ -7,6 +7,21 @@ let new_uvar = fun () ->
   let v = "X"^(string_of_int !uvar_number) in
   (incr uvar_number; v);;
 
+let rec pattern_to_ty (pat: pattern) : (ty * (var * (var list * ty)) list) =
+  match pat with
+  | PBool _ -> (Tbool, [])
+  | PInt _ -> (Tint, [])
+  | PVar var -> 
+    let nv = Tuvar (new_uvar ()) in
+    (nv, [(var, ([], nv))])
+  | PTuple lst -> 
+    let mlist = List.map (fun pat -> pattern_to_ty pat) lst in
+    (
+      Tprod (List.map fst mlist),
+      List.concat (List.map snd mlist)
+    )
+;;
+
 let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pbm = match t with
 | Op(op, t1, t2) -> (
     let x1 = new_uvar () in let x2 = new_uvar () in
@@ -42,24 +57,26 @@ let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pb
         let newty = replace_polyvar sb rty in
         [ (Tuvar v, newty) ]
     )
-  | Fun (PVar x, body) ->
-    let a1 = new_uvar () in
-    let a2 = new_uvar () in
-    let env' = (x, ([], Tuvar a1)) :: env in
-    let u = infer env' a2 body in
-    (Tuvar v, Tarr (Tuvar a1, Tuvar a2)) :: u
   | App (t1, t2) ->
     let a1 = new_uvar () in
     let a2 = new_uvar () in
     let u1 = infer env a1 t1 in
     let u2 = infer env a2 t2 in
     (Tuvar a1, Tarr (Tuvar a2, Tuvar v)) :: (u1 @ u2)
-  | Let (PVar x, t1, t2, false) ->
+  | Fun (pattern, body) ->
+    let (ptype, bindings) = pattern_to_ty pattern in
+    let env' = bindings @ env in
+    let a2 = new_uvar () in
+    let u = infer env' a2 body in
+    (Tuvar v, Tarr (ptype, Tuvar a2)) :: u
+  (*not 100% sure is correct*)
+  | Let (pattern, t1, t2, false) ->
     let a1 = new_uvar () in
     let u1 = infer env a1 t1 in
-    let env' = (x, ([], Tuvar a1)) :: env in
+    let (ptype, bindings) = pattern_to_ty pattern in
+    let env' = bindings @ env in
     let u2 = infer env' v t2 in
-    u1 @ u2
+    (Tuvar a1, ptype) :: u1 @ u2
   | If (e1, e2, e3) ->
     let a1 = new_uvar () in
     let a2 = new_uvar () in
@@ -68,7 +85,11 @@ let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pb
     let u2 = infer env a2 e2 in
     let u3 = infer env a3 e3 in
     [(Tuvar a1, Tbool); (Tuvar v, Tuvar a2); (Tuvar a2, Tuvar a3)]@u1@u2@u3
-  | _ -> raise UnimplementedError;;
+  | expr -> 
+    print_string "Erreur, expr inconnue dans le typage :\n";
+    affiche_expr expr;
+    print_string "\n";
+    raise UnimplementedError;;
 
 (*Indique si une variable apparait dans ce qui existe déjà*)
 let rec appear (x : var) (term : ty) : bool =

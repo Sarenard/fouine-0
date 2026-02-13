@@ -8,8 +8,8 @@ let heap = {
   size = size;
 };;
 
-let rec pattern_match (pat: pattern) (value: valeur) : ((string*valeur) list) option
- = match (pat, value) with
+let rec pattern_match (pat: pattern) (value: valeur) : ((string*valeur) list) option = 
+  match (pat, value) with
   | (PInt k1, VI k2) when k1 = k2 -> Some []
   | (PBool b1, VB b2) when b1 = b2 -> Some []
   | (PVar x, value) -> if x = "_" then Some [] else Some [(x,value)]

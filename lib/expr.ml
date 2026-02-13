@@ -254,7 +254,7 @@ let rec replace_polyvar (sb : subst) (term: ty) : ty =
   | Tarr(t1, t2) -> Tarr(
       replace_polyvar sb t1,
       replace_polyvar sb t2
-    )
+    );;
 
 let empty_env_type = [
   ("prInt", ([], Tarr(Tint, Tint)));
