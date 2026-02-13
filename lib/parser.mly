@@ -58,7 +58,7 @@ controwlflow:
   | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
   | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
-  | s=VAR ASSIGN e=expression                { Assign(s, e) }
+  | s=VAR ASSIGN e=expression                { App(App(String ":=", String s), e) }
   | MATCH e=expression WITH m=match_inner {Match(e, m)}
   | operator {$1}
 

@@ -111,10 +111,6 @@ let rec eval value env = match value with
     in func e1 e2
     )
   | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))
-  | Assign(s, e) -> 
-    let v = eval (String s) env in (match v with
-    | VR k -> (heap.array.(k) <- eval e env); VU
-    | _ -> raise WrongType)
   | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
   | Match(e1, lst) ->
     let v1 = eval e1 env in 

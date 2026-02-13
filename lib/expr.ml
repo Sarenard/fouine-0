@@ -6,7 +6,6 @@ type expr =
   | Int of int
   | Bool of bool
   | String of string
-  | Assign of string*expr
   | If of expr*expr*expr
   | Let of pattern*expr*expr*bool (*true = recursive*)
   | Fun of pattern*expr
@@ -87,12 +86,6 @@ let rec affiche_expr e =
   | Fun(pat, e) -> (
     print_string "Fun(";
     affiche_pattern pat;
-	  print_string ", ";
-    affiche_expr e;
-    print_string ")";)
-  | Assign(x, e) -> (
-    print_string "Assign(";
-    print_string x;
 	  print_string ", ";
     affiche_expr e;
     print_string ")";)
@@ -193,10 +186,17 @@ let bang_buildin heap _env = function
   | VR k -> heap.array.(k)
   | _ -> raise WrongType
 
+let assign_buildin _heap _env val1 = 
+  let assign_aux k heap _env val2 = (heap.array.(k) <- val2); VU in
+    match val1 with
+    | VR k -> VF_buildin (assign_aux k)
+    | _ -> raise WrongType
+
 let empty_env = [
   ("prInt", (VF_buildin prInt));
   ("ref", (VF_buildin ref_buildin));
   ("!", (VF_buildin bang_buildin));
+  (":=", (VF_buildin assign_buildin))
 ]
 
 (*Typing stuff*)
@@ -260,4 +260,5 @@ let empty_env_type = [
   ("prInt", ([], Tarr(Tint, Tint)));
   ("ref", (["Y0"], Tarr(Tpolyvar("Y0"), Tref(Tpolyvar("Y0")))));
   ("!", (["Y1"], Tarr(Tref(Tpolyvar("Y1")), Tpolyvar("Y1"))));
+  (":=", (["Y2"], Tarr(Tref(Tpolyvar("Y2")), Tarr(Tpolyvar("Y2"), Tprod []))));
 ]

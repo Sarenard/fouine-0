@@ -130,7 +130,9 @@ let unify (pb : unif_pbm) : subst =
         | (ty, Tuvar x) ->
             unify_aux ((Tuvar x, ty) :: rest) sb
 
-        | _ -> raise UnimplementedError;
+        | (t1, t2) -> 
+          Printf.printf "Unify_aux err : (%s = %s)\n" (string_of_ty t1) (string_of_ty t2);
+          raise Not_unifyable;
   in
   unify_aux pb []
 
