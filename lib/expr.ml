@@ -215,6 +215,8 @@ type unif_pbm = (ty*ty) list
  
 type subst = (var * ty) list
 
+type infer_env = (var * (var list * ty)) list
+
 let rec string_of_ty ty =
   match ty with
   | Tint -> "int"
@@ -255,6 +257,31 @@ let rec replace_polyvar (sb : subst) (term: ty) : ty =
       replace_polyvar sb t1,
       replace_polyvar sb t2
     );;
+
+(*Indique si une variable apparait dans ce qui existe déjà*)
+let rec appear (x : var) (term : ty) : bool =
+  match term with
+  | Tint | Tbool | Tpolyvar _ -> false
+  | Tuvar y -> x = y
+  | Tref t -> appear x t
+  | Tprod lst -> List.exists (appear x) lst
+  | Tarr(t1, t2) -> appear x t1 || appear x t2
+
+(*Effectue la substitution sigma(term) = term[new_x/x] *)
+let rec replace ((x, new_x) : var * ty) (term : ty) : ty =
+  match term with
+  | Tint | Tbool | Tpolyvar _ -> term
+  | Tuvar y when y = x -> new_x
+  | Tuvar _ -> term
+  | Tref t -> Tref (replace (x, new_x) t);
+  | Tprod lst -> Tprod (List.map (replace (x, new_x)) lst)
+  | Tarr(t1, t2) -> Tarr(
+    replace (x, new_x) t1,
+    replace (x, new_x) t2
+  );;
+
+let apply_subst (sb : subst) (term : ty) : ty =
+  List.fold_left (fun acc (x, u) -> replace (x, u) acc) term sb
 
 let empty_env_type = [
   ("prInt", ([], Tarr(Tint, Tint)));

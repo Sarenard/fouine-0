@@ -7,7 +7,7 @@ let new_uvar = fun () ->
   let v = "X"^(string_of_int !uvar_number) in
   (incr uvar_number; v);;
 
-let rec pattern_to_ty (pat: pattern) : (ty * (var * (var list * ty)) list) =
+let rec pattern_to_ty (pat: pattern) : (ty * infer_env) (*le type du pattern et les bindings*)=
   match pat with
   | PBool _ -> (Tbool, [])
   | PInt _ -> (Tint, [])
@@ -22,7 +22,7 @@ let rec pattern_to_ty (pat: pattern) : (ty * (var * (var list * ty)) list) =
     )
 ;;
 
-let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pbm = match t with
+let rec infer (env : infer_env) (v : var) (t: expr) : unif_pbm = match t with
 | Op(op, t1, t2) -> (
     let x1 = new_uvar () in let x2 = new_uvar () in
     let u1 = infer env x1 t1 in let u2 = infer env x2 t2 in
@@ -69,21 +69,31 @@ let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pb
     let a2 = new_uvar () in
     let u = infer env' a2 body in
     (Tuvar v, Tarr (ptype, Tuvar a2)) :: u
-  (*not 100% sure is correct*)
+  (*No generalisation version !!*)
   | Let (pattern, t1, t2, false) (*not rec*) ->
-    let a1 = new_uvar () in
     let (ptype, bindings) = pattern_to_ty pattern in
-    let env' = bindings @ env in
+    let a1 = new_uvar () in
     let u1 = infer env a1 t1 in
-    let u2 = infer env' v t2 in
+    let env2 = bindings @ env in
+    let u2 = infer env2 v t2 in
     (Tuvar a1, ptype) :: u1 @ u2
+  (* 
+  (*Generalisation version !!*)
+  | Let (pattern, _t1, _t2, false) (*not rec*) ->
+    let (_ptype, bindings) = pattern_to_ty pattern in
+    let _bindings_types = List.map (
+      fun x -> x
+    ) bindings in
+    raise UnimplementedError;
+  *)
+
   | Let (pattern, t1, t2, true) (*rec*) -> (
     match pattern with
     | PVar s -> (
         let a1 = new_uvar () in
-        let env' = (s, ([], Tuvar a1))::env in
-        let u1 = infer env' a1 t1 in
-        let u2 = infer env' v t2 in
+        let env2 = (s, ([], Tuvar a1))::env in
+        let u1 = infer env2 a1 t1 in
+        let u2 = infer env2 v t2 in
         u1 @ u2
       )
     | _ -> raise Unreachable
@@ -108,33 +118,8 @@ let rec infer (env : (var * (var list * ty)) list) (v : var) (t: expr) : unif_pb
         (Tuvar a1, ptype) :: (Tuvar newvar, Tuvar v) :: u2
     ) lst in constraints @ u1
 
-(*Indique si une variable apparait dans ce qui existe déjà*)
-let rec appear (x : var) (term : ty) : bool =
-  match term with
-  | Tint | Tbool | Tpolyvar _ -> false
-  | Tuvar y -> x = y
-  | Tref t -> appear x t
-  | Tprod lst -> List.exists (appear x) lst
-  | Tarr(t1, t2) -> appear x t1 || appear x t2
-
-(*Effectue la substitution sigma(term) = term[new_x/x] *)
-let rec replace ((x, new_x) : var * ty) (term : ty) : ty =
-  match term with
-  | Tint | Tbool | Tpolyvar _ -> term
-  | Tuvar y when y = x -> new_x
-  | Tuvar _ -> term
-  | Tref t -> Tref (replace (x, new_x) t);
-  | Tprod lst -> Tprod (List.map (replace (x, new_x)) lst)
-  | Tarr(t1, t2) -> Tarr(
-    replace (x, new_x) t1,
-    replace (x, new_x) t2
-  );;
-
-let apply_subst (sb : subst) (term : ty) : ty =
-  List.fold_left (fun acc (x, u) -> replace (x, u) acc) term sb
-
 (*Implémente l'unification de deux termes*)
-let unify (pb : unif_pbm) : subst =
+and unify (pb : unif_pbm) : subst =
   let rec unify_aux (pb : unif_pbm) (sb : subst) : subst =
     match pb with
     | [] -> sb

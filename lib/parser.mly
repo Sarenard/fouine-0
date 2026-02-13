@@ -19,9 +19,9 @@ open Expr
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
 %nonassoc ELSE IN ARROW  
-%nonassoc below_PIPE
 %nonassoc LE GE NE
 %nonassoc L G
+%nonassoc below_PIPE
 %left PIPE
 %left EQ
 %right AND
