@@ -23,7 +23,7 @@ let rec pattern_to_ty (pat: pattern) : (ty * infer_env) (*le type du pattern et 
 ;;
 
 let rec infer (env : infer_env) (v : var) (t: expr) : unif_pbm = match t with
-| Op(op, t1, t2) -> (
+  | Op(op, t1, t2) -> (
     let x1 = new_uvar () in let x2 = new_uvar () in
     let u1 = infer env x1 t1 in let u2 = infer env x2 t2 in
     match op with
