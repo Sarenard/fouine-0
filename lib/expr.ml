@@ -97,7 +97,6 @@ let rec affiche_expr e =
 
 (*valeurs*)
 type valeur = 
-  | VU
   | VI of int
   | VR of int
   | VB of bool
@@ -118,7 +117,6 @@ and heap = {
 
 let rec affiche_val v = 
   match v with 
-  | VU -> print_string "Unit"
   | VR k ->
     print_string "R(";
     print_int k;
@@ -141,7 +139,6 @@ let rec affiche_val v =
   | Boom -> print_string "Boom"
 
 let rec compare_val val1 val2 = match (val1, val2) with
-  | (VU, VU) -> true
   | (VB k1,VB k2) -> (k1 = k2)
   | (VI k1,VI k2) -> (k1 = k2)
   | (VT lst1, VT lst2) -> compare_tuple compare_val lst1 lst2
@@ -187,7 +184,7 @@ let bang_buildin heap _env = function
   | _ -> raise WrongType
 
 let assign_buildin _heap _env val1 = 
-  let assign_aux k heap _env val2 = (heap.array.(k) <- val2); VU in
+  let assign_aux k heap _env val2 = (heap.array.(k) <- val2); VT [] in
     match val1 with
     | VR k -> VF_buildin (assign_aux k)
     | _ -> raise WrongType
