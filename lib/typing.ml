@@ -7,6 +7,21 @@ let new_uvar (vars : (ty list ref)) : ty =
   newvar
 ;;
 
+let rec pattern_to_ty (pat: pattern) (vars : (ty list ref)) : (ty * infer_env) (*le type du pattern et les bindings*)=
+  match pat with
+  | PBool _ -> (Tbool, [])
+  | PInt _ -> (Tint, [])
+  | PVar var -> 
+    let nv = new_uvar vars in
+    (nv, [(var, nv)])
+  | PTuple lst -> 
+    let mlist = List.map (fun pat -> pattern_to_ty pat vars) lst in
+    (
+      Tprod (List.map fst mlist),
+      List.concat (List.map snd mlist)
+    )
+;;
+
 let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty = 
   match expr with
   | Op(op, t1, t2) -> (
@@ -38,24 +53,24 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
     | None -> raise (UnknownVariable var_name);
     | Some t -> t
   )
-  | Fun (PVar x, body) ->
-    let newvar = new_uvar vars in
-    let newenv = (x, newvar)::env in
+  | Fun (pat, body) ->
+    let (patty, bindings) = pattern_to_ty pat vars in
+    let newenv = bindings@env in
     let bodyty = infer newenv vars body in
-    Tarr (newvar, bodyty)
-  | Let (PVar x, e1, e2, false) (*not rec*) ->
-    let newvar = new_uvar vars in
-    let newenv = (x, newvar)::env in
+    Tarr (patty, bodyty)
+  | Let (pat, e1, e2, false) (*not rec*) ->
+    let (patty, bindings) = pattern_to_ty pat vars in
+    let newenv = bindings@env in
     let e1ty = infer env vars e1 in
     let e2ty = infer newenv vars e2 in
-    unify newvar e1ty;
+    unify patty e1ty;
     e2ty
-  | Let (PVar x, e1, e2, true) (*rec*) ->
-    let newvar = new_uvar vars in
-    let newenv = (x, newvar)::env in
+  | Let (pat, e1, e2, true) (*rec*) ->
+    let (patty, bindings) = pattern_to_ty pat vars in
+    let newenv = bindings@env in
     let e1ty = infer newenv vars e1 in
     let e2ty = infer newenv vars e2 in
-    unify newvar e1ty;
+    unify patty e1ty;
     e2ty
   | If (cond, e1, e2) ->
     let condty = infer env vars cond in
