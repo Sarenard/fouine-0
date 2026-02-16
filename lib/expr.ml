@@ -201,88 +201,43 @@ type var = string
 
 type ty = 
   | Tint 
-  | Tbool
-  | Tprod of ty list
-  | Tuvar of var
-  | Tpolyvar of var
+  | Tuvar of (ty option) ref
   | Tarr of ty * ty 
-  | Tref of ty
 
-type unif_pbm = (ty*ty) list
- 
-type subst = (var * ty) list
-
-type infer_env = (var * (var list * ty)) list
+type infer_env = (var * ty) list
 
 let rec string_of_ty ty =
   match ty with
   | Tint -> "int"
-  | Tbool -> "bool"
-  | Tuvar v -> v
-  | Tpolyvar v -> "PV(" ^ v ^ ")"
-  | Tref v -> "Ref(" ^ (string_of_ty v) ^ ")"
-  | Tprod lst ->
-    "(" ^ String.concat " * " (List.map string_of_ty lst) ^ ")"
+  | Tuvar v -> (
+    match !v with
+    | None -> string_of_int (Obj.magic v mod 997)
+    | Some t -> string_of_ty t
+  )
   | Tarr (t1, t2) ->
-      "(" ^ string_of_ty t1 ^ " -> " ^ string_of_ty t2 ^ ")"
+    "(" ^ string_of_ty t1 ^ " -> " ^ string_of_ty t2 ^ ")"
 
-let rec print_sub = function
-  | [] -> ()
-  | (v,t)::q -> let _ = (Printf.printf "%s = %s\n" v (string_of_ty t);) in
-    print_sub q
-;;
-
-let print_pbm (pbm : unif_pbm) =
-  let i = ref 0 in
-  List.iter (fun (t1, t2) ->
-    incr i;
-    Printf.printf "  [%d] %s  =  %s\n" !i (string_of_ty t1) (string_of_ty t2)
-  ) pbm
-;;
-
-let rec replace_polyvar (sb : subst) (term: ty) : ty = 
-  match term with
-  | Tint | Tbool | Tuvar _ -> term
-  | Tref t -> Tref (replace_polyvar sb t)
-  | Tpolyvar w -> (
-      match List.assoc_opt w sb with
-      | None -> raise FreePolyVar
-      | Some t -> t
+let rec canonic (t : ty) : ty =
+  match t with
+  | Tuvar r -> (
+      match !r with
+      | None -> t
+      | Some pointedt ->
+          let canonized = canonic pointedt in
+          r := Some canonized;
+          canonized
     )
-  | Tprod lst -> Tprod (List.map (fun t -> replace_polyvar sb t) lst)
-  | Tarr(t1, t2) -> Tarr(
-      replace_polyvar sb t1,
-      replace_polyvar sb t2
-    );;
-
-(*Indique si une variable apparait dans ce qui existe déjà*)
-let rec appear (x : var) (term : ty) : bool =
-  match term with
-  | Tint | Tbool | Tpolyvar _ -> false
-  | Tuvar y -> x = y
-  | Tref t -> appear x t
-  | Tprod lst -> List.exists (appear x) lst
-  | Tarr(t1, t2) -> appear x t1 || appear x t2
-
-(*Effectue la substitution sigma(term) = term[new_x/x] *)
-let rec replace ((x, new_x) : var * ty) (term : ty) : ty =
-  match term with
-  | Tint | Tbool | Tpolyvar _ -> term
-  | Tuvar y when y = x -> new_x
-  | Tuvar _ -> term
-  | Tref t -> Tref (replace (x, new_x) t);
-  | Tprod lst -> Tprod (List.map (replace (x, new_x)) lst)
-  | Tarr(t1, t2) -> Tarr(
-    replace (x, new_x) t1,
-    replace (x, new_x) t2
-  );;
-
-let apply_subst (sb : subst) (term : ty) : ty =
-  List.fold_left (fun acc (x, u) -> replace (x, u) acc) term sb
+  | Tarr (a, b) ->
+      let newa = canonic a in
+      let newb = canonic b in
+      Tarr (newa, newb)
+  | Tint -> Tint
 
 let empty_env_type = [
-  ("prInt", ([], Tarr(Tint, Tint)));
+  ("prInt", Tarr(Tint, Tint));
+  (*
   ("ref", (["Y0"], Tarr(Tpolyvar("Y0"), Tref(Tpolyvar("Y0")))));
   ("!", (["Y1"], Tarr(Tref(Tpolyvar("Y1")), Tpolyvar("Y1"))));
   (":=", (["Y2"], Tarr(Tref(Tpolyvar("Y2")), Tarr(Tpolyvar("Y2"), Tprod []))));
-]
+  *)
+  ]
