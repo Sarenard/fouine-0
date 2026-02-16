@@ -86,8 +86,19 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
     unify condty Tbool;
     unify e1ty e2ty;
     e1ty
-  | _ -> 
-    raise UnimplementedError;
+  | Match (e1, lst) -> 
+    let newvar = new_uvar vars in
+    let exprty = infer env vars e1 in
+    let lstmapped = List.map (
+      fun (pat, exp) -> 
+        let (ptype, bindings) = pattern_to_ty pat vars in
+        let newenv = bindings @ env in
+        let exp_typ = infer newenv vars exp in
+        unify exprty ptype;
+        unify newvar exp_typ;
+        exp_typ
+    ) lst in
+    List.hd lstmapped
 
 (*Implémente l'unification de deux termes*)
 and unify (t1: ty) (t2 : ty) : unit =
