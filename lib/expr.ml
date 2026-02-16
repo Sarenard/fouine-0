@@ -206,16 +206,36 @@ type ty =
 
 type infer_env = (var * ty) list
 
-let rec string_of_ty ty =
-  match ty with
-  | Tint -> "int"
-  | Tuvar v -> (
-    match !v with
-    | None -> string_of_int (Obj.magic v mod 997)
-    | Some t -> string_of_ty t
-  )
-  | Tarr (t1, t2) ->
-    "(" ^ string_of_ty t1 ^ " -> " ^ string_of_ty t2 ^ ")"
+let string_of_ty (t : ty) : string =
+  let ids : (((ty option) ref) * int) list ref = ref [] in
+  let next = ref 0 in
+
+  let id_of (r : (ty option) ref) : int =
+    match List.find_opt (fun (r', _) -> r' == r) !ids with
+    | Some (_, i) -> i
+    | None ->
+        let i = !next in
+        incr next;
+        ids := (r, i) :: !ids;
+        i
+  in
+
+  (*prec is for ()*)
+  let rec make_str (prec : int) (t : ty) : string =
+    match t with
+    | Tint -> "int"
+
+    | Tuvar r -> (
+        match !r with
+        | None -> "'a" ^ string_of_int (id_of r)
+        | Some t' -> make_str prec t'
+      )
+
+    | Tarr (a, b) ->
+        let s = make_str 1 a ^ " -> " ^ make_str 0 b in
+        if prec > 0 then "(" ^ s ^ ")" else s
+  in
+  make_str 0 t
 
 let rec canonic (t : ty) : ty =
   match t with
