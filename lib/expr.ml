@@ -201,7 +201,9 @@ type var = string
 
 type ty = 
   | Tint 
+  | Tbool
   | Tuvar of (ty option) ref
+  | Tprod of ty list
   | Tarr of ty * ty 
 
 type infer_env = (var * ty) list
@@ -224,12 +226,22 @@ let string_of_ty (t : ty) : string =
   let rec make_str (prec : int) (t : ty) : string =
     match t with
     | Tint -> "int"
-
+    | Tbool -> "bool"
+    
     | Tuvar r -> (
         match !r with
         | None -> "'a" ^ string_of_int (id_of r)
         | Some t' -> make_str prec t'
       )
+
+    | Tprod ts ->
+        let s =
+          match ts with
+          | [] -> "unit"
+          | _ ->
+              String.concat " * " (List.map (make_str 1) ts)
+        in
+        if prec > 1 then "(" ^ s ^ ")" else s
 
     | Tarr (a, b) ->
         let s = make_str 1 a ^ " -> " ^ make_str 0 b in
@@ -239,6 +251,7 @@ let string_of_ty (t : ty) : string =
 
 let rec canonic (t : ty) : ty =
   match t with
+  | Tint | Tbool -> t
   | Tuvar r -> (
       match !r with
       | None -> t
@@ -247,11 +260,12 @@ let rec canonic (t : ty) : ty =
           r := Some canonized;
           canonized
     )
+  | Tprod li ->
+    Tprod (List.map canonic li)
   | Tarr (a, b) ->
       let newa = canonic a in
       let newb = canonic b in
       Tarr (newa, newb)
-  | Tint -> Tint
 
 let empty_env_type = [
   ("prInt", Tarr(Tint, Tint));

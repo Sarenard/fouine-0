@@ -9,7 +9,24 @@ let new_uvar (vars : (ty list ref)) : ty =
 
 let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty = 
   match expr with
+  | Op(op, t1, t2) -> (
+    let x1 = new_uvar vars in let x2 = new_uvar vars in
+    let u1 = infer env vars t1 in let u2 = infer env vars t2 in
+    match op with
+    | "+" | "-" | "/" | "*" ->
+      unify u1 Tint; unify u2 Tint; Tint
+    | "<" | "<=" | ">" | ">=" ->
+      unify u1 Tint; unify u2 Tint; Tbool
+    | "&&" | "||" ->
+      unify u1 Tbool; unify u2 Tbool; Tbool
+    | "=" | "<>" -> 
+      unify u1 u2; Tbool
+    | _ -> raise UnimplementedError
+  )
   | Int _ -> Tint
+  | Bool _ -> Tbool
+  | Tuple lst ->
+    Tprod (List.map (infer env vars) lst)
   | App (t1, t2) ->
     let v1 = new_uvar vars in
     let v2 = new_uvar vars in
@@ -26,6 +43,27 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
     let newenv = (x, newvar)::env in
     let bodyty = infer newenv vars body in
     Tarr (newvar, bodyty)
+  | Let (PVar x, e1, e2, false) (*not rec*) ->
+    let newvar = new_uvar vars in
+    let newenv = (x, newvar)::env in
+    let e1ty = infer env vars e1 in
+    let e2ty = infer newenv vars e2 in
+    unify newvar e1ty;
+    e2ty
+  | Let (PVar x, e1, e2, true) (*rec*) ->
+    let newvar = new_uvar vars in
+    let newenv = (x, newvar)::env in
+    let e1ty = infer newenv vars e1 in
+    let e2ty = infer newenv vars e2 in
+    unify newvar e1ty;
+    e2ty
+  | If (cond, e1, e2) ->
+    let condty = infer env vars cond in
+    let e1ty = infer env vars e1 in
+    let e2ty = infer env vars e2 in
+    unify condty Tbool;
+    unify e1ty e2ty;
+    e1ty
   | _ -> 
     raise UnimplementedError;
 
@@ -34,9 +72,12 @@ and unify (t1: ty) (t2 : ty) : unit =
   let nt1, nt2 = canonic t1, canonic t2 in
   match (nt1, nt2) with
   | Tint, Tint -> ()
+  | Tbool, Tbool -> ()
   | Tarr (a, b), Tarr (c, d) ->
     unify a c;
     unify b d;
+  | Tprod t1, Tprod t2 ->
+    List.iter2 unify t1 t2;
   | Tuvar r1, Tuvar r2 when r1 == r2 -> ()
   | Tuvar r, t ->
     r := Some (canonic t);
