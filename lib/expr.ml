@@ -203,10 +203,14 @@ type ty =
   | Tint 
   | Tbool
   | Tuvar of (ty option) ref
+  | Tpolyvar of var
   | Tprod of ty list
   | Tarr of ty * ty 
+  | Tref of ty
 
-type infer_env = (var * ty) list
+type infer_env = (var * (var list * ty)) list
+
+type subst = (var * ty) list
 
 let string_of_ty (t : ty) : string =
   let ids : (((ty option) ref) * int) list ref = ref [] in
@@ -227,12 +231,16 @@ let string_of_ty (t : ty) : string =
     match t with
     | Tint -> "int"
     | Tbool -> "bool"
+
+    | Tref t -> "ref " ^ make_str prec t
     
     | Tuvar r -> (
         match !r with
         | None -> "'a" ^ string_of_int (id_of r)
         | Some t' -> make_str prec t'
       )
+
+    | Tpolyvar v -> "PV(" ^ v ^ ")"
 
     | Tprod ts ->
         let s =
@@ -251,7 +259,7 @@ let string_of_ty (t : ty) : string =
 
 let rec canonic (t : ty) : ty =
   match t with
-  | Tint | Tbool -> t
+  | Tint | Tbool | Tpolyvar _ -> t
   | Tuvar r -> (
       match !r with
       | None -> t
@@ -260,6 +268,7 @@ let rec canonic (t : ty) : ty =
           r := Some canonized;
           canonized
     )
+  | Tref t -> Tref (canonic t)
   | Tprod li ->
     Tprod (List.map canonic li)
   | Tarr (a, b) ->
@@ -267,11 +276,24 @@ let rec canonic (t : ty) : ty =
       let newb = canonic b in
       Tarr (newa, newb)
 
+let rec replace_polyvar (sb : subst) (term: ty) : ty = 
+  match term with
+  | Tint | Tbool | Tuvar _ -> term
+  | Tpolyvar w -> (
+      match List.assoc_opt w sb with
+      | None -> raise FreePolyVar
+      | Some t -> t
+    )
+  | Tref t -> Tref (replace_polyvar sb t)
+  | Tprod lst -> Tprod (List.map (fun t -> replace_polyvar sb t) lst)
+  | Tarr(t1, t2) -> Tarr(
+      replace_polyvar sb t1,
+      replace_polyvar sb t2
+    );;
+
 let empty_env_type = [
-  ("prInt", Tarr(Tint, Tint));
-  (*
+  ("prInt", ([], Tarr(Tint, Tint)));
   ("ref", (["Y0"], Tarr(Tpolyvar("Y0"), Tref(Tpolyvar("Y0")))));
   ("!", (["Y1"], Tarr(Tref(Tpolyvar("Y1")), Tpolyvar("Y1"))));
   (":=", (["Y2"], Tarr(Tref(Tpolyvar("Y2")), Tarr(Tpolyvar("Y2"), Tprod []))));
-  *)
   ]

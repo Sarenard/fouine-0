@@ -13,7 +13,7 @@ let rec pattern_to_ty (pat: pattern) (vars : (ty list ref)) : (ty * infer_env) (
   | PInt _ -> (Tint, [])
   | PVar var -> 
     let nv = new_uvar vars in
-    (nv, [(var, nv)])
+    (nv, [(var, ([], nv))])
   | PTuple lst -> 
     let mlist = List.map (fun pat -> pattern_to_ty pat vars) lst in
     (
@@ -40,6 +40,11 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
   )
   | Int _ -> Tint
   | Bool _ -> Tbool
+  | Seq (e1, e2) ->
+    let e1ty = infer env vars e1 in
+    let e2ty = infer env vars e2 in
+    unify e1ty (Tprod []);
+    e2ty
   | Tuple lst ->
     Tprod (List.map (infer env vars) lst)
   | App (t1, t2) ->
@@ -51,7 +56,9 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
   | String var_name -> (
     match List.assoc_opt var_name env with
     | None -> raise (UnknownVariable var_name);
-    | Some t -> t
+    | Some (lstargs, rty) -> 
+        let sb = List.map (fun polyvar -> (polyvar, new_uvar vars)) lstargs in
+        replace_polyvar sb rty
   )
   | Fun (pat, body) ->
     let (patty, bindings) = pattern_to_ty pat vars in
@@ -86,19 +93,24 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
 and unify (t1: ty) (t2 : ty) : unit =
   let nt1, nt2 = canonic t1, canonic t2 in
   match (nt1, nt2) with
-  | Tint, Tint -> ()
-  | Tbool, Tbool -> ()
-  | Tarr (a, b), Tarr (c, d) ->
+  | (Tint, Tint )-> ()
+  | (Tbool, Tbool) -> ()
+  | (Tarr (a, b), Tarr (c, d)) ->
     unify a c;
     unify b d;
-  | Tprod t1, Tprod t2 ->
+  | (Tprod t1, Tprod t2) ->
     List.iter2 unify t1 t2;
-  | Tuvar r1, Tuvar r2 when r1 == r2 -> ()
-  | Tuvar r, t ->
+  | (Tref a, Tref b) ->
+    unify a b;
+  | (Tuvar r1, Tuvar r2) when r1 == r2 ->
+    ()
+  | (Tuvar r, t) ->
     r := Some (canonic t);
-  | t, Tuvar r -> 
+  | (t, Tuvar r) -> 
     unify (Tuvar r) t
-  | _ -> raise Not_unifyable
+  | (t1, t2) -> 
+    Printf.printf "Unify_aux err : (%s = %s)\n" (string_of_ty t1) (string_of_ty t2);
+    raise Not_unifyable;
 ;;
 
 let typer (t : expr) (debug: bool) : ty =
