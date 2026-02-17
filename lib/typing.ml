@@ -7,7 +7,7 @@ let new_uvar (vars : (ty list ref)) : ty =
   newvar
 ;;
 
-let rec pattern_to_ty (pat: pattern) (vars : (ty list ref)) : (ty * infer_env) (*le type du pattern et les bindings*)=
+let rec pattern_to_ty (pat: pattern) (vars : (ty list ref)) : (ty * infer_env) (*le type du pattern et les bindings*) =
   match pat with
   | PBool _ -> (Tbool, [])
   | PInt _ -> (Tint, [])
@@ -65,7 +65,7 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
     let newenv = bindings@env in
     let bodyty = infer newenv vars body in
     Tarr (patty, bodyty)
-  | Let (pat, e1, e2, false) (*not rec*) ->
+  | Let (pat, e1, e2, false) (*not rec, polymorphism*) ->
     let (patty, bindings) = pattern_to_ty pat vars in
     let newenv = bindings@env in
     let e1ty = infer env vars e1 in
