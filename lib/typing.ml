@@ -7,6 +7,45 @@ let new_uvar (vars : (ty list ref)) : ty =
   newvar
 ;;
 
+let var_nb = ref 0
+
+let get_nb = fun () ->
+  let v = !var_nb in
+  (incr var_nb; v);;
+
+let generalize (term: ty) : (var list * ty) =
+  let ids : (((ty option) ref) * int) list ref = ref [] in
+
+  let id_of (r : (ty option) ref) : int =
+    match List.find_opt (fun (r', _) -> r' == r) !ids with
+    | Some (_, i) -> i
+    | None ->
+        let i = get_nb () in
+        ids := (r, i) :: !ids;
+        i
+  in
+
+  let rec replace (t : ty) : ty =
+    match t with
+    | Tint | Tbool -> t
+    (*we dont generalise refs*)
+    | Tref t -> Tref t
+    | Tpolyvar v -> Tpolyvar v
+    | Tprod ts -> Tprod (List.map replace ts)
+    | Tarr (a, b) -> Tarr (replace a, replace b)
+    | Tuvar r -> (
+        match !r with
+        | None -> Tpolyvar ("X"^string_of_int (id_of r))
+        | Some t -> r := Some (replace t); t
+      )
+  in
+
+  let newterm = replace term in
+  let polylist = List.map (fun (_, b) -> "X"^(string_of_int b)) (!ids) in
+
+  (polylist, newterm)
+;;
+
 let rec pattern_to_ty (pat: pattern) (vars : (ty list ref)) : (ty * infer_env) (*le type du pattern et les bindings*) =
   match pat with
   | PBool _ -> (Tbool, [])
@@ -67,11 +106,22 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
     Tarr (patty, bodyty)
   | Let (pat, e1, e2, false) (*not rec, polymorphism*) ->
     let (patty, bindings) = pattern_to_ty pat vars in
+    let e1ty = infer env vars e1 in
+    let newenv = (List.map
+    (fun (v, (_vl, t)) -> (v, generalize t))
+    bindings)@env in
+    unify patty e1ty;
+    let e2ty = infer newenv vars e2 in
+    e2ty
+  (*
+  | Let (pat, e1, e2, false) (*not rec, polymorphism*) ->
+    let (patty, bindings) = pattern_to_ty pat vars in
     let newenv = bindings@env in
     let e1ty = infer env vars e1 in
     let e2ty = infer newenv vars e2 in
     unify patty e1ty;
     e2ty
+  *)
   | Let (pat, e1, e2, true) (*rec*) ->
     let (patty, bindings) = pattern_to_ty pat vars in
     let newenv = bindings@env in
