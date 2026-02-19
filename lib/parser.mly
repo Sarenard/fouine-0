@@ -55,8 +55,15 @@ expression:
 
 controwlflow:
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
-  | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
-  | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
+  
+  (*normal let*)
+  | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1, e2, e3, false) }
+  | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1, e2, e3, true) }
+
+  (*let f x = ...*)
+  | LET s=VAR e2=pattern+ EQ e3=expression IN e4=expression { Let(PVar s, (List.fold_right (fun x acc -> Fun(x, acc)) e2 e3), e4, false) }
+  | LET REC s=VAR e2=pattern+ EQ e3=expression IN e4=expression { Let(PVar s, (List.fold_right (fun x acc -> Fun(x, acc)) e2 e3), e4, true) }
+
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | s=VAR ASSIGN e=expression                { App(App(String ":=", String s), e) }
   | MATCH e=expression WITH m=match_inner {Match(e, m)}
