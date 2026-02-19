@@ -107,21 +107,12 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
   | Let (pat, e1, e2, false) (*not rec, polymorphism*) ->
     let (patty, bindings) = pattern_to_ty pat vars in
     let e1ty = infer env vars e1 in
+    unify patty e1ty;
     let newenv = (List.map
-    (fun (v, (_vl, t)) -> (v, generalize t))
+    (fun (v, (_vl, t)) -> (v, generalize (canonic t)))
     bindings)@env in
-    unify patty e1ty;
     let e2ty = infer newenv vars e2 in
     e2ty
-  (*
-  | Let (pat, e1, e2, false) (*not rec, polymorphism*) ->
-    let (patty, bindings) = pattern_to_ty pat vars in
-    let newenv = bindings@env in
-    let e1ty = infer env vars e1 in
-    let e2ty = infer newenv vars e2 in
-    unify patty e1ty;
-    e2ty
-  *)
   | Let (pat, e1, e2, true) (*rec*) ->
     let (patty, bindings) = pattern_to_ty pat vars in
     let newenv = bindings@env in
