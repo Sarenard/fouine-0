@@ -1,0 +1,1 @@
+let rec f = (fun x -> if true then 1 else f x) in (f 2, f true);;
