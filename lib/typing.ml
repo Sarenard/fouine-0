@@ -1,6 +1,8 @@
 open Expr
 open Exceptions
 
+let typ_debug = ref false;;
+
 let new_uvar (vars : (ty list ref)) : ty =
   let newvar = Tuvar (ref None) in
   vars := newvar :: !vars;
@@ -82,7 +84,7 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
   | Seq (e1, e2) ->
     let e1ty = infer env vars e1 in
     let e2ty = infer env vars e2 in
-    unify e1ty (Tprod []);
+    (*unify e1ty (Tprod []);*) (*this is not required by ocaml, its only a warning*)
     e2ty
   | Tuple lst ->
     Tprod (List.map (infer env vars) lst)
@@ -164,27 +166,32 @@ and unify (t1: ty) (t2 : ty) : unit =
   | (t, Tuvar r) -> 
     unify (Tuvar r) t
   | (t1, t2) -> 
-    Printf.printf "Unify_aux err : (%s = %s)\n" (string_of_ty t1) (string_of_ty t2);
+    if !typ_debug then (
+      Printf.printf "Unify_aux err : (%s = %s)\n" (string_of_ty t1) (string_of_ty t2);
+    );
     raise Not_unifyable;
 ;;
 
-let typer (t : expr) (debug: bool) : ty =
+let typer (t : expr): ty =
   begin
-    if debug then (
+    if !typ_debug then (
       print_string "# inférence sur "; affiche_expr t; print_string "\n";
     );
     try
       let vars = ref [] in
       let typ = infer empty_env_type vars t in
-      if debug then (
+      if !typ_debug then (
         print_string ("Type :\n  " ^ (string_of_ty typ) ^ "\n");
       );
       typ
     with e ->
-      Printf.printf "Error : uncaught exception '%s'.\n\n" (Printexc.to_string e);
+      if !typ_debug then (
+        Printf.printf "Error : uncaught exception '%s'.\n\n" (Printexc.to_string e);
+      );
       raise Not_unifyable
   end
 
 let main (expression : Expr.expr) (debug: bool) : ty = 
-  typer expression debug
+  typ_debug := debug;
+  typer expression
 ;;
