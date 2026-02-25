@@ -15,6 +15,24 @@ let get_nb = fun () ->
   let v = !var_nb in
   (incr var_nb; v);;
 
+let rec can_generalize (expr: expr) : bool = match expr with
+  | Int k -> true
+  | Bool k -> true
+  | String k -> true
+  | App(e1,e2) -> false
+  | Seq(e1,e2) -> can_generalize e1 || can_generalize e2
+  | Match(e1, lst) -> 
+    can_generalize e1 
+    || (List.is_empty (List.filter (fun (a, b) -> can_generalize b) lst)) 
+  | Op(name, e1,e2) ->
+      can_generalize e1 || can_generalize e2
+  | If(e1, e2, e3) ->
+    can_generalize e1 || can_generalize e2 || can_generalize e3
+  | Let(pat, e2, e3, recursive) ->
+    can_generalize e2 || can_generalize e3
+  | Fun(pat, e) -> can_generalize e
+  | Tuple(lst) -> List.is_empty (List.filter can_generalize lst)
+
 let generalize (term: ty) : (var list * ty) =
   let ids : (((ty option) ref) * int) list ref = ref [] in
 
@@ -110,9 +128,14 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
     let (patty, bindings) = pattern_to_ty pat vars in
     let e1ty = infer env vars e1 in
     unify patty e1ty;
-    let newenv = (List.map
-    (fun (v, (_vl, t)) -> (v, generalize (canonic t)))
-    bindings)@env in
+    let newenv = (
+      if can_generalize e1 then 
+        (List.map
+        (fun (v, (_vl, t)) -> (v, generalize (canonic t)))
+        bindings)@env
+      else
+        bindings@env
+    ) in
     let e2ty = infer newenv vars e2 in
     e2ty
   | Let (pat, e1, e2, true) (*rec*) ->
@@ -120,10 +143,14 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
     let newenv_mono = bindings@env in
     let e1ty = infer newenv_mono vars e1 in
     unify patty e1ty;
-    let newenv_poly = (List.map
-    (fun (v, (_vl, t)) -> (v, generalize (canonic t)))
-    bindings)@env in
-    let e2ty = infer newenv_poly vars e2 in
+    let newenv_poly = 
+      if can_generalize e1 then 
+        (List.map
+        (fun (v, (_vl, t)) -> (v, generalize (canonic t)))
+        bindings)@env 
+      else
+        bindings@env
+    in let e2ty = infer newenv_poly vars e2 in
     e2ty
   | If (cond, e1, e2) ->
     let condty = infer env vars cond in
