@@ -33,6 +33,7 @@ let rec can_generalize (expr: expr) : bool = match expr with
   | Fun(pat, e) -> can_generalize e
   | Tuple(lst) -> List.is_empty (List.filter can_generalize lst)
 
+(*TODO : substitution*)
 let generalize (term: ty) : (var list * ty) =
   let ids : (((ty option) ref) * int) list ref = ref [] in
 
