@@ -40,12 +40,12 @@ def test(file):
     try:
         if err or fouine_result.stderr != fouine_rewrite_result.stderr:
             cprint(f"Error not conform in {file}", "red")
-            cprint(f"Caml   : {fouine_rewrite_result.stderr}", "red")
-            cprint(f"Fouine : {fouine_result.stderr}", "red")
+            cprint(f"Showsrc : {fouine_rewrite_result.stderr}", "red")
+            cprint(f"Fouine  : {fouine_result.stderr}", "red")
         if err or fouine_result.stdout != fouine_rewrite_result.stdout:
             cprint(f"Output not conform in {file}", "red")
-            cprint(f"Caml   : {fouine_rewrite_result.stdout}", "red")
-            cprint(f"Fouine : {fouine_result.stdout}", "red")
+            cprint(f"Showsrc : {fouine_rewrite_result.stdout}", "red")
+            cprint(f"Fouine  : {fouine_result.stdout}", "red")
         if not err and fouine_result.stdout == fouine_rewrite_result.stdout and fouine_result.stderr == fouine_rewrite_result.stderr:
             cprint(f"Test {file} passed", "green")
             return True
@@ -53,11 +53,10 @@ def test(file):
         cprint(f"Error in {file}", "red")
     return False
 
-
 cprint("Building Project", "green")
 try:
     with open("tests/temp.ml", "r") as f:
-        fouine_rewrite_result = subprocess.run(
+        caml_result = subprocess.run(
             ["dune", "build"],
         )
 except subprocess.CalledProcessError as e:
@@ -66,16 +65,22 @@ cprint("Project successfuly build", "green")
 cprint("")
 
 ml_files = [
-    os.path.join(root, f) for root, dirs, files in os.walk("tests")
-    for f in files if f.endswith(".ml") and f != "temp.ml"
+    os.path.join(root, f)
+    for root, dirs, files in os.walk("tests")
+    for f in files
+    if f.endswith(".ml")
+    and f != "temp.ml"
+    and "ShouldFail" not in root.split(os.sep)
 ]
+
+nb_test = len(ml_files)
 
 total = 0
 for file in ml_files:
     total += test(file)
 
 print()
-if total == len(ml_files):
+if total == nb_test:
     cprint(f"All {total} test passed !!", "green")
 else:
-    cprint(f"Some tests didnt pass : ({total}/{len(ml_files)} correct).", "red")
+    cprint(f"Some tests didnt pass : ({total}/{nb_test} correct).", "red")

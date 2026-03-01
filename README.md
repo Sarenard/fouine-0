@@ -16,6 +16,11 @@ pour lancer les tests, faire
 python tests/test.py
 ```
 
+pour lancer les tests sur -showsrc, faire
+```
+python tests/test_codegen.py
+```
+
 ## Etapes réalisées
 
 ### Rendu 0
@@ -39,6 +44,7 @@ python tests/test.py
 9. (Sarah) Let sans in au toplevel
 10. (Sarah) Typage monomorphe des entiers et booléens
 11. (Sarah) Typage (tout sauf le polymorphisme)
+12. (Maya) Option -showsrc avec tests
 ### Rendu 2
 
 ## Etapes à faire

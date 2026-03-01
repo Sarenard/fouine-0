@@ -27,11 +27,11 @@ let recupere_entree () =
 let run () =
   try
     let saisie = recupere_entree () in
-    let _typed = Typing.main saisie (!debug) in
     if !showsrc then (
       Format.printf "%a;;@." Codegen.print saisie;
       flush stdout
     ) else (
+      let _typed = Typing.main saisie (!debug) in
       let _ = if !debug then (Expr.affiche_expr saisie; print_newline ()) else () in
       let out = Eval.eval saisie Expr.empty_env in
       let _ = if !debug then (Expr.affiche_val out; print_newline ()) else () in
