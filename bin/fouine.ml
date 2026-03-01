@@ -19,12 +19,15 @@ let recupere_entree () =
       | s -> open_in s in
     let lexbuf = Lexing.from_channel where_from in
     let parse () = Parser.main Lexer.token lexbuf in
-    parse () 
-  with e -> (Printf.printf "Asteriiiiiiiiiiiiiiix\n"; raise e)
+    parse ()
+  with e -> (
+    Printf.printf "Asteriiiiiiiiiiiiiiix\n"; raise e
+  )
 
 let run () =
   try
     let saisie = recupere_entree () in
+    let _typed = Typing.main saisie (!debug) in
     if !showsrc then (
       Format.printf "%a;;@." Codegen.print saisie;
       flush stdout
@@ -37,4 +40,3 @@ let run () =
   with e -> raise e
 
 let _ = run ()
-

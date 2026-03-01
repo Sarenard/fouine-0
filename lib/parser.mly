@@ -3,25 +3,31 @@ open Expr
 %}
 
 /* PARTIE 2, on liste les lexèmes (lien avec le fichier lexer.mll) ******* */                                   
-%token EQ
 %token BANG ASSIGN SEQ SEQQ
 %token OR AND
-%token PLUS TIMES MINUS
+%token PLUS TIMES MINUS DIV
 %token BEGIN END
 %token LPAREN RPAREN COMMA
+%token MATCH WITH PIPE
 %token LET IF THEN ELSE IN FUN ARROW REC
+%token L LE G GE NE EQ
+%token EOF
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
 %token <string> VAR
 
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
-%nonassoc ELSE IN ARROW
+%nonassoc ELSE IN ARROW  
+%nonassoc LE GE NE
+%nonassoc L G
+%nonassoc below_PIPE
+%left PIPE
 %left EQ
 %right AND
 %right OR
 %left PLUS MINUS
-%left TIMES
+%left TIMES DIV
 %right SEQ
 %right ASSIGN
 
@@ -34,60 +40,90 @@ open Expr
 %%
 
 main:
-  | e=expression SEQQ { e }
+  | e=toplevel EOF { e }
+  | e=toplevel SEQQ EOF { e }
 
-/* règles de grammaire pour les expressions ; le non-terminal s'appelle "expression" */                                                                                
+toplevel:
+  | e1 = toplevel SEQQ e2 = expression {Seq(e1, e2)}
+  | LET e1=pattern EQ e2=expression SEQQ e3 = expression { Let(e1,e2,e3, false) }
+  | LET REC e1=pattern EQ e2=expression SEQQ e3=expression { Let(e1,e2,e3, true) }
+  | e = expression {e}
+
 expression:			   
-   /* on appelle i l'attribut associé à INT */
-  | i=INT                             { Int i }
-  | b=BOOL                             { Bool b }
-  | s=VAR                             { String s }
-  | e1=expression PLUS e2=expression      { Op("+", e1, e2) }
-  | e1=expression TIMES e2=expression     { Op("*", e1, e2) }
-  | e1=expression MINUS e2=expression     { Op("-", e1, e2) }
-  | e1=expression OR e2=expression     { Op("||", e1, e2) }
-  | e1=expression AND e2=expression     { Op("&&", e1, e2) }
-  | e1=expression EQ e2=expression     { Op("=", e1, e2) }
-  | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
-  | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, false) }
-  | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1,e2,e3, true) }
-  | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
-  | MINUS e=expression                    { Op("-", Int 0, e) } (* le moins unaire *)
-  | k=applic                          { k }
-  | LPAREN RPAREN                    { Tuple [] }
-  | BEGIN END                             { Tuple [] }
-  | BANG s=VAR                { Bang(s) }
-  | s=VAR ASSIGN e=expression                { Assign(s, e) }
-  | BEGIN e=expression END                { e }
-  | LPAREN e=expression RPAREN            { e } 
   | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
+  | controwlflow {$1}
+
+controwlflow:
+  | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
+
+  (*normal let*)
+  | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1, e2, e3, false) }
+  | LET REC e1=pattern EQ e2=expression IN e3=expression { Let(e1, e2, e3, true) }
+
+  (*let f x = ...*)
+  | LET s=VAR e2=pattern+ EQ e3=expression IN e4=expression { Let(PVar s, (List.fold_right (fun x acc -> Fun(x, acc)) e2 e3), e4, false) }
+  | LET REC s=VAR e2=pattern+ EQ e3=expression IN e4=expression { Let(PVar s, (List.fold_right (fun x acc -> Fun(x, acc)) e2 e3), e4, true) }
+
+  | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
+  | e1=expression ASSIGN e2=expression                { App(App(String ":=", e1), e2) }
+  | MATCH e=expression WITH m=match_inner {Match(e, m)}
+  | operator {$1}
+
+match_inner:
+  | first = match_first rest = match_rest {first :: rest}
+
+match_first:
+  | PIPE p=pattern ARROW e=expression {(p,e)}
+  | p=pattern ARROW e=expression {(p,e)}
+
+match_rest:
+  | %prec below_PIPE {[]} (*weird precedence*)
+  | PIPE p=pattern ARROW e=expression lst=match_rest {(p,e)::lst}
+
+operator:
+  | e1=operator OR e2=operator     { Op("||", e1, e2) }
+  | e1=operator AND e2=operator     { Op("&&", e1, e2) }
+  | e1=operator EQ e2=operator     { Op("=", e1, e2) }
+  | e1=operator DIV e2=operator      { Op("/", e1, e2) }
+  | e1=operator PLUS e2=operator      { Op("+", e1, e2) }
+  | e1=operator MINUS e2=operator     { Op("-", e1, e2) }
+  | e1 = operator TIMES e2 = operator { Op("*", e1, e2) }
+  | e1 = operator LE e2 = operator { Op("<=", e1, e2) }
+  | e1 = operator GE e2 = operator { Op(">=", e1, e2) }
+  | e1 = operator NE e2 = operator { Op("<>", e1, e2) }
+  | e1 = operator L e2 = operator { Op("<", e1, e2) }
+  | e1 = operator G e2 = operator { Op(">", e1, e2) }
+  | MINUS e=operator { Op("-", Int 0, e)}
+  | e = applic { e }
+
+applic:
+  | e1=applic e2=expr_ident {App(e1, e2)}
+  | expr_ident {$1}
+
+expr_ident:
+  | i=INT {Int i}
+  | b=BOOL {Bool b}
+  | BANG e=expr_ident { App(String "!", e) }
+  | s=VAR {String s}
+  | LPAREN RPAREN                    { Tuple [] }
+  | LPAREN e=expression RPAREN {e}
   (*TODO : a tuple is a tuple even without parentheses*)
   | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 
+  | BEGIN END                             { Tuple [] }
+  | BEGIN e=expression END                { e }
+
+expr_list:
+  | x=expression                        { [x] }
+  | xs=expr_list COMMA x=expression     { xs @ [x] }
 
 pattern:
   | i=INT {PInt i}
   | b=BOOL {PBool b}
   | LPAREN x=pattern RPAREN  { x } 
-  | LPAREN RPAREN  { PTuple [] } 
+  | LPAREN RPAREN  { PTuple [] }
   | LPAREN xs=pattern_list COMMA x=pattern RPAREN  { PTuple (xs @ [x]) } 
   | s=VAR {PVar s}
 
 pattern_list:
   | x = pattern { [x] }
   | xs = pattern_list COMMA x = pattern {xs @ [x] }
-
-expr_list:
-  | x=expression                        { [x] }
-  | xs=expr_list COMMA x=expression     { xs @ [x] }
-
-applic:
-  | e1=applic e2=sexpr {App(e1, e2)}
-  | e1=sexpr e2=sexpr {App(e1, e2)}
-
-sexpr:
-  | LPAREN e=expression RPAREN {e}
-  | i=INT {Int i}
-  | b=BOOL {Bool b}
-  | BANG s=VAR { Bang(s) }
-  | s=VAR {String s}
-  | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 

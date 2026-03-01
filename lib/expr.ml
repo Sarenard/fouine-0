@@ -1,12 +1,11 @@
 open Util
+open Exceptions
 
 (*expressions*)
 type expr =
   | Int of int
   | Bool of bool
   | String of string
-  | Bang of string
-  | Assign of string*expr
   | If of expr*expr*expr
   | Let of pattern*expr*expr*bool (*true = recursive*)
   | Fun of pattern*expr
@@ -14,6 +13,7 @@ type expr =
   | Tuple of expr list
   | Op of string*expr*expr
   | Seq of expr*expr
+  | Match of expr*((pattern*expr) list)
 
 and pattern = 
   | PTuple of pattern list
@@ -51,6 +51,12 @@ let rec affiche_expr e =
   | String k -> print_string k
   | App(e1,e2) -> aff_aux "App(" e1 e2
   | Seq(e1,e2) -> aff_aux "Seq(" e1 e2
+  | Match(e1, lst) ->
+    print_string "Match(";
+    affiche_expr e1;
+    print_string ", [";
+    List.iter (fun (x, y) -> affiche_pattern x; print_string " -> "; affiche_expr y; print_string ", ") lst;
+    print_string "])";
   | Op(name, e1,e2) ->
     print_string "Op(";
     print_string name;
@@ -83,16 +89,6 @@ let rec affiche_expr e =
 	  print_string ", ";
     affiche_expr e;
     print_string ")";)
-  | Assign(x, e) -> (
-    print_string "Assign(";
-    print_string x;
-	  print_string ", ";
-    affiche_expr e;
-    print_string ")";)
-  | Bang(s) -> (
-    print_string "Bang(";
-    print_string s;
-    print_string ")";)
   | Tuple(lst) -> (
     print_string "Tuple(";
     List.iter (fun x -> affiche_expr x; print_string ", ") lst;
@@ -101,7 +97,6 @@ let rec affiche_expr e =
 
 (*valeurs*)
 type valeur = 
-  | VU
   | VI of int
   | VR of int
   | VB of bool
@@ -122,7 +117,6 @@ and heap = {
 
 let rec affiche_val v = 
   match v with 
-  | VU -> print_string "Unit"
   | VR k ->
     print_string "R(";
     print_int k;
@@ -145,10 +139,10 @@ let rec affiche_val v =
   | Boom -> print_string "Boom"
 
 let rec compare_val val1 val2 = match (val1, val2) with
-  | (VU, VU) -> true
   | (VB k1,VB k2) -> (k1 = k2)
   | (VI k1,VI k2) -> (k1 = k2)
   | (VT lst1, VT lst2) -> compare_tuple compare_val lst1 lst2
+  (*what about refs?*)
   | _ -> false
 
 let print_env env = List.iter (fun (x, e) ->
@@ -185,7 +179,121 @@ let prInt _heap _env = function
 
 let ref_buildin heap _env value = VR (set_new value heap)
 
+let bang_buildin heap _env = function
+  | VR k -> heap.array.(k)
+  | _ -> raise WrongType
+
+let assign_buildin _heap _env val1 = 
+  let assign_aux k heap _env val2 = (heap.array.(k) <- val2); VT [] in
+    match val1 with
+    | VR k -> VF_buildin (assign_aux k)
+    | _ -> raise WrongType
+
 let empty_env = [
   ("prInt", (VF_buildin prInt));
   ("ref", (VF_buildin ref_buildin));
+  ("!", (VF_buildin bang_buildin));
+  (":=", (VF_buildin assign_buildin))
 ]
+
+(*Typing stuff*)
+type var = string
+
+type ty = 
+  | Tint 
+  | Tbool
+  | Tuvar of (ty option) ref
+  | Tpolyvar of var
+  | Tprod of ty list
+  | Tarr of ty * ty 
+  | Tref of ty
+
+type infer_env = (var * (var list * ty)) list
+
+type subst = (var * ty) list
+
+let string_of_ty (t : ty) : string =
+  let ids : (((ty option) ref) * int) list ref = ref [] in
+  let next = ref 0 in
+
+  let id_of (r : (ty option) ref) : int =
+    match List.find_opt (fun (r', _) -> r' == r) !ids with
+    | Some (_, i) -> i
+    | None ->
+        let i = !next in
+        incr next;
+        ids := (r, i) :: !ids;
+        i
+  in
+
+  (*prec is for ()*)
+  let rec make_str (prec : int) (t : ty) : string =
+    match t with
+    | Tint -> "int"
+    | Tbool -> "bool"
+
+    | Tref t -> "ref " ^ make_str prec t
+    
+    | Tuvar r -> (
+        match !r with
+        | None -> "'a" ^ string_of_int (id_of r)
+        | Some t' -> make_str prec t'
+      )
+
+    | Tpolyvar v -> "PV(" ^ v ^ ")"
+
+    | Tprod ts ->
+        let s =
+          match ts with
+          | [] -> "unit"
+          | _ ->
+              String.concat " * " (List.map (make_str 1) ts)
+        in
+        if prec > 1 then "(" ^ s ^ ")" else s
+
+    | Tarr (a, b) ->
+        let s = make_str 1 a ^ " -> " ^ make_str 0 b in
+        if prec > 0 then "(" ^ s ^ ")" else s
+  in
+  make_str 0 t
+
+let rec canonic (t : ty) : ty =
+  match t with
+  | Tint | Tbool | Tpolyvar _ -> t
+  | Tuvar r -> (
+      match !r with
+      | None -> t
+      | Some pointedt ->
+          let canonized = canonic pointedt in
+          r := Some canonized;
+          canonized
+    )
+  | Tref t -> Tref (canonic t)
+  | Tprod li ->
+    Tprod (List.map canonic li)
+  | Tarr (a, b) ->
+      let newa = canonic a in
+      let newb = canonic b in
+      Tarr (newa, newb)
+
+let rec replace_polyvar (sb : subst) (term: ty) : ty = 
+  match term with
+  | Tint | Tbool | Tuvar _ -> term
+  | Tpolyvar w -> (
+      match List.assoc_opt w sb with
+      | None -> raise FreePolyVar
+      | Some t -> t
+    )
+  | Tref t -> Tref (replace_polyvar sb t)
+  | Tprod lst -> Tprod (List.map (fun t -> replace_polyvar sb t) lst)
+  | Tarr(t1, t2) -> Tarr(
+      replace_polyvar sb t1,
+      replace_polyvar sb t2
+    );;
+
+let empty_env_type = [
+  ("prInt", ([], Tarr(Tint, Tint)));
+  ("ref", (["Y0"], Tarr(Tpolyvar("Y0"), Tref(Tpolyvar("Y0")))));
+  ("!", (["Y1"], Tarr(Tref(Tpolyvar("Y1")), Tpolyvar("Y1"))));
+  (":=", (["Y2"], Tarr(Tref(Tpolyvar("Y2")), Tarr(Tpolyvar("Y2"), Tprod []))));
+  ]

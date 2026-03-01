@@ -1,0 +1,225 @@
+open Expr
+open Exceptions
+
+let typ_debug = ref false;;
+
+let new_uvar (vars : (ty list ref)) : ty =
+  let newvar = Tuvar (ref None) in
+  vars := newvar :: !vars;
+  newvar
+;;
+
+let var_nb = ref 0
+
+let get_nb = fun () ->
+  let v = !var_nb in
+  (incr var_nb; v);;
+
+let rec can_generalize (expr: expr) : bool = match expr with
+  | Int k -> true
+  | Bool k -> true
+  | String k -> true
+  | App(e1,e2) -> false
+  | Seq(e1,e2) -> can_generalize e1 || can_generalize e2
+  | Match(e1, lst) -> 
+    can_generalize e1 
+    || (List.is_empty (List.filter (fun (a, b) -> can_generalize b) lst)) 
+  | Op(name, e1,e2) ->
+      can_generalize e1 || can_generalize e2
+  | If(e1, e2, e3) ->
+    can_generalize e1 || can_generalize e2 || can_generalize e3
+  | Let(pat, e2, e3, recursive) ->
+    can_generalize e2 || can_generalize e3
+  | Fun(pat, e) -> can_generalize e
+  | Tuple(lst) -> List.is_empty (List.filter can_generalize lst)
+
+(*TODO : substitution*)
+let generalize (term: ty) : (var list * ty) =
+  let ids : (((ty option) ref) * int) list ref = ref [] in
+
+  let id_of (r : (ty option) ref) : int =
+    match List.find_opt (fun (r', _) -> r' == r) !ids with
+    | Some (_, i) -> i
+    | None ->
+        let i = get_nb () in
+        ids := (r, i) :: !ids;
+        i
+  in
+
+  let rec replace (t : ty) : ty =
+    match t with
+    | Tint | Tbool -> t
+    (*we dont generalise refs*)
+    | Tref t -> Tref t
+    | Tpolyvar v -> Tpolyvar v
+    | Tprod ts -> Tprod (List.map replace ts)
+    | Tarr (a, b) -> Tarr (replace a, replace b)
+    | Tuvar r -> (
+        match !r with
+        | None -> Tpolyvar ("X"^string_of_int (id_of r))
+        | Some t -> r := Some (replace t); t
+      )
+  in
+
+  let newterm = replace term in
+  let polylist = List.map (fun (_, b) -> "X"^(string_of_int b)) (!ids) in
+
+  (polylist, newterm)
+;;
+
+let rec pattern_to_ty (pat: pattern) (vars : (ty list ref)) : (ty * infer_env) (*le type du pattern et les bindings*) =
+  match pat with
+  | PBool _ -> (Tbool, [])
+  | PInt _ -> (Tint, [])
+  | PVar var -> 
+    let nv = new_uvar vars in
+    (nv, [(var, ([], nv))])
+  | PTuple lst -> 
+    let mlist = List.map (fun pat -> pattern_to_ty pat vars) lst in
+    (
+      Tprod (List.map fst mlist),
+      List.concat (List.map snd mlist)
+    )
+;;
+
+let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty = 
+  match expr with
+  | Op(op, t1, t2) -> (
+    let x1 = new_uvar vars in let x2 = new_uvar vars in
+    let u1 = infer env vars t1 in let u2 = infer env vars t2 in
+    match op with
+    | "+" | "-" | "/" | "*" ->
+      unify u1 Tint; unify u2 Tint; Tint
+    | "<" | "<=" | ">" | ">=" ->
+      unify u1 Tint; unify u2 Tint; Tbool
+    | "&&" | "||" ->
+      unify u1 Tbool; unify u2 Tbool; Tbool
+    | "=" | "<>" -> 
+      unify u1 u2; Tbool
+    | _ -> raise UnimplementedError
+  )
+  | Int _ -> Tint
+  | Bool _ -> Tbool
+  | Seq (e1, e2) ->
+    let e1ty = infer env vars e1 in
+    let e2ty = infer env vars e2 in
+    (*unify e1ty (Tprod []);*) (*this is not required by ocaml, its only a warning*)
+    e2ty
+  | Tuple lst ->
+    Tprod (List.map (infer env vars) lst)
+  | App (t1, t2) ->
+    let v1 = new_uvar vars in
+    let v2 = new_uvar vars in
+    unify (infer env vars t1) (Tarr (v1, v2));
+    unify (infer env vars t2) v1;
+    v2
+  | String var_name -> (
+    match List.assoc_opt var_name env with
+    | None -> raise (UnknownVariable var_name);
+    | Some (lstargs, rty) -> 
+        let sb = List.map (fun polyvar -> (polyvar, new_uvar vars)) lstargs in
+        replace_polyvar sb rty
+  )
+  | Fun (pat, body) ->
+    let (patty, bindings) = pattern_to_ty pat vars in
+    let newenv = bindings@env in
+    let bodyty = infer newenv vars body in
+    Tarr (patty, bodyty)
+  | Let (pat, e1, e2, false) (*not rec, polymorphism*) ->
+    let (patty, bindings) = pattern_to_ty pat vars in
+    let e1ty = infer env vars e1 in
+    unify patty e1ty;
+    let newenv = (
+      if can_generalize e1 then 
+        (List.map
+        (fun (v, (_vl, t)) -> (v, generalize (canonic t)))
+        bindings)@env
+      else
+        bindings@env
+    ) in
+    let e2ty = infer newenv vars e2 in
+    e2ty
+  | Let (pat, e1, e2, true) (*rec*) ->
+    let (patty, bindings) = pattern_to_ty pat vars in
+    let newenv_mono = bindings@env in
+    let e1ty = infer newenv_mono vars e1 in
+    unify patty e1ty;
+    let newenv_poly = 
+      if can_generalize e1 then 
+        (List.map
+        (fun (v, (_vl, t)) -> (v, generalize (canonic t)))
+        bindings)@env 
+      else
+        bindings@env
+    in let e2ty = infer newenv_poly vars e2 in
+    e2ty
+  | If (cond, e1, e2) ->
+    let condty = infer env vars cond in
+    let e1ty = infer env vars e1 in
+    let e2ty = infer env vars e2 in
+    unify condty Tbool;
+    unify e1ty e2ty;
+    e1ty
+  | Match (e1, lst) -> 
+    let newvar = new_uvar vars in
+    let exprty = infer env vars e1 in
+    let lstmapped = List.map (
+      fun (pat, exp) -> 
+        let (ptype, bindings) = pattern_to_ty pat vars in
+        let newenv = bindings @ env in
+        let exp_typ = infer newenv vars exp in
+        unify exprty ptype;
+        unify newvar exp_typ;
+        exp_typ
+    ) lst in
+    List.hd lstmapped
+
+(*Implémente l'unification de deux termes*)
+and unify (t1: ty) (t2 : ty) : unit =
+  let nt1, nt2 = canonic t1, canonic t2 in
+  match (nt1, nt2) with
+  | (Tint, Tint )-> ()
+  | (Tbool, Tbool) -> ()
+  | (Tarr (a, b), Tarr (c, d)) ->
+    unify a c;
+    unify b d;
+  | (Tprod t1, Tprod t2) ->
+    List.iter2 unify t1 t2;
+  | (Tref a, Tref b) ->
+    unify a b;
+  | (Tuvar r1, Tuvar r2) when r1 == r2 ->
+    ()
+  | (Tuvar r, t) ->
+    r := Some (canonic t);
+  | (t, Tuvar r) -> 
+    unify (Tuvar r) t
+  | (t1, t2) -> 
+    if !typ_debug then (
+      Printf.printf "Unify_aux err : (%s = %s)\n" (string_of_ty t1) (string_of_ty t2);
+    );
+    raise Not_unifyable;
+;;
+
+let typer (t : expr): ty =
+  begin
+    if !typ_debug then (
+      print_string "# inférence sur "; affiche_expr t; print_string "\n";
+    );
+    try
+      let vars = ref [] in
+      let typ = infer empty_env_type vars t in
+      if !typ_debug then (
+        print_string ("Type :\n  " ^ (string_of_ty typ) ^ "\n");
+      );
+      typ
+    with e ->
+      if !typ_debug then (
+        Printf.printf "Error : uncaught exception '%s'.\n\n" (Printexc.to_string e);
+      );
+      raise Not_unifyable
+  end
+
+let main (expression : Expr.expr) (debug: bool) : ty = 
+  typ_debug := debug;
+  typer expression
+;;

@@ -31,20 +31,24 @@ python tests/test.py
 2. (Sarah) Opérateurs buildins gérés correctement
 3. (Sarah) refs
 3. (Sarah) patterns dans les let
+4. (Maya) let avec _
+5. (Sarah) fonction avec unit en argument
+6. (Sarah) matchs
+7. (Sarah) Gérer les patterns dans les fonctions
+8. (Sarah) Faire tout les opérateurs buildins
+9. (Sarah) Let sans in au toplevel
+10. (Sarah) Typage monomorphe des entiers et booléens
+11. (Sarah) Typage (tout sauf le polymorphisme)
 ### Rendu 2
 
 ## Etapes à faire
-1. Faire tout les opérateurs buildins
-2. let avec _
-3. let sans in au toplevel
-4. fonction avec unit en argument
-5. exceptions
-6. gérer les tuples sans parenthèses
-7. Gérer les patterns dans les fonctions
-8. matchs
-9. listes
-10. Erreurs
-11. types algébriques
+1. Gérer les tuples sans parenthèses
+2. Listes
+3. Erreurs
+4. Typage avec polymorphisme
+5. Parsing des let f x = ...
+6. Types algébriques
+7. Continuiations
 
 # Fun sideprojects done
 Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier de tests.
