@@ -1,12 +1,15 @@
 open Lib
+open Format
 
 let nom_fichier = ref ""
 let debug = ref false
+let showsrc = ref false
 
 let recupere_entree () =
   Arg.parse (* ci-dessous les 3 arguments de Arg.parse : *)
     [
       ("-d", Arg.Set debug, "Mode debug");
+      ("-showsrc", Arg.Set showsrc, "Show source instead of run")
     ] (* la liste des options, vide *)
     (fun s -> nom_fichier := s) (* la fonction a declencher lorsqu'on recupere un string qui n'est pas une option : ici c'est le nom du fichier, et on stocke cette information dans la reference nom_fichier *)
     ""; (* le message d'accueil, qui est vide *)
@@ -22,10 +25,15 @@ let recupere_entree () =
 let run () =
   try
     let saisie = recupere_entree () in
-    let _ = if !debug then (Expr.affiche_expr saisie; print_newline ()) else () in
-    let out = Eval.eval saisie Expr.empty_env in
-    let _ = if !debug then (Expr.affiche_val out; print_newline ()) else () in
-    flush stdout
+    if !showsrc then (
+      Format.printf "%a;;@." Codegen.print saisie;
+      flush stdout
+    ) else (
+      let _ = if !debug then (Expr.affiche_expr saisie; print_newline ()) else () in
+      let out = Eval.eval saisie Expr.empty_env in
+      let _ = if !debug then (Expr.affiche_val out; print_newline ()) else () in
+      flush stdout
+    )
   with e -> raise e
 
 let _ = run ()
