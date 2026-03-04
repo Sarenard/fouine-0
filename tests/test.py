@@ -30,7 +30,6 @@ def test_ok(file):
             )
     except subprocess.CalledProcessError as e:
         err = True
-    # TODO : better handle when error (relaunch fouine in debug mode ?)
     try:
         if err or fouine_result.stderr != caml_result.stderr:
             cprint(f"Error not conform in {file}", "red")

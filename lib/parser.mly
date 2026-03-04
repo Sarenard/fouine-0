@@ -29,8 +29,9 @@ open Expr
 %right OR
 %left PLUS MINUS
 %left TIMES DIV
+%nonassoc below_COMMA
+%left COMMA
 %right SEQ
-%right ASSIGN
 
 /* PARTIE 4, le point d'entrée ******************************************* */
 %start main             /* "start" signale le point d'entrée du parser: */
@@ -50,9 +51,22 @@ toplevel:
   | LET REC e1=pattern EQ e2=expression SEQQ e3=expression { Let(e1,e2,e3, true) }
   | e = expression {e}
 
-expression:			   
-  | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
-  | controwlflow {$1}
+expression:
+  | e1=expression SEQ e2=expression { Seq(e1, e2) }
+  | e=tuple_expr { e }
+
+tuple_expr:
+  | e=assign_expr %prec below_COMMA { e }
+  | e1=assign_expr COMMA e2=assign_expr rest=tuple_more
+      { Tuple (e1 :: e2 :: rest) }
+
+tuple_more:
+  | %prec below_COMMA { [] }
+  | COMMA e=assign_expr rest=tuple_more { e :: rest }
+
+assign_expr:
+  | e1=operator ASSIGN e2=assign_expr { App(App(String ":=", e1), e2) }
+  | e=controwlflow { e }
 
 controwlflow:
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
@@ -66,7 +80,6 @@ controwlflow:
   | LET REC s=VAR e2=pattern+ EQ e3=expression IN e4=expression { Let(PVar s, (List.fold_right (fun x acc -> Fun(x, acc)) e2 e3), e4, true) }
 
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
-  | e1=expression ASSIGN e2=expression                { App(App(String ":=", e1), e2) }
   | MATCH e=expression WITH m=match_inner {Match(e, m)}
   | TRY e1=expression WITH LPAREN E v=VAR RPAREN ARROW e2=expression {Try(e1, v, e2)}
   | operator {$1}
@@ -110,23 +123,24 @@ expr_ident:
   | s=VAR {String s}
   | LPAREN RPAREN                    { Tuple [] }
   | LPAREN e=expression RPAREN {e}
-  (*TODO : a tuple is a tuple even without parentheses*)
-  | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 
   | BEGIN END                             { Tuple [] }
   | BEGIN e=expression END                { e }
 
-expr_list:
-  | x=expression                        { [x] }
-  | xs=expr_list COMMA x=expression     { xs @ [x] }
-
 pattern:
-  | i=INT {PInt i}
-  | b=BOOL {PBool b}
-  | LPAREN x=pattern RPAREN  { x } 
-  | LPAREN RPAREN  { PTuple [] }
-  | LPAREN xs=pattern_list COMMA x=pattern RPAREN  { PTuple (xs @ [x]) } 
-  | s=VAR {PVar s}
+  | p=pattern_tuple { p }
 
-pattern_list:
-  | x = pattern { [x] }
-  | xs = pattern_list COMMA x = pattern {xs @ [x] }
+pattern_atom:
+  | i=INT { PInt i }
+  | b=BOOL { PBool b }
+  | s=VAR { PVar s }
+  | LPAREN RPAREN { PTuple [] }
+  | LPAREN p=pattern RPAREN { p }
+
+pattern_tuple:
+  | p=pattern_atom { p }
+  | p1=pattern_atom COMMA p2=pattern_atom rest=pattern_more
+      { PTuple (p1 :: p2 :: rest) }
+
+pattern_more:
+  | { [] }
+  | COMMA p=pattern_atom rest=pattern_more { p :: rest }
