@@ -49,7 +49,7 @@ python tests/test_codegen.py
 15. (Sarah) Parsing des let f x = ...
 16. (Sarah) Gérer les tuples sans parenthèses
 17. (Maya) Listes avec parsing litéral
-18. (Maya) Match des listes
+18. (Maya) Match avec les listes
 ### Rendu 2
 
 ## Etapes à faire

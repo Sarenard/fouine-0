@@ -36,7 +36,7 @@ let rec can_generalize (expr: expr) : bool = match expr with
     can_generalize e1 
     || (List.is_empty (List.filter (fun (a, b) -> can_generalize b) lst)) 
   | Raise (_val) -> true
-  | LinkedList(lst) -> failwith "todo"
+  | LinkedList(lst) -> List.is_empty (List.filter can_generalize lst)
 
 (*TODO : substitution*)
 let generalize (term: ty) : (var list * ty) =
