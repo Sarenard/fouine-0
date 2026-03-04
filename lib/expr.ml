@@ -24,6 +24,8 @@ and pattern =
   | PBool of bool
   | PInt of int
   | PVar of string
+  | PNil
+  | PCons of pattern*pattern
 ;;
 
 let rec affiche_pattern pat = match pat with
@@ -37,6 +39,8 @@ let rec affiche_pattern pat = match pat with
     print_string "P(";
     List.iter (fun x -> affiche_pattern x; print_string ", ") l;
     print_string ")"
+  | PNil -> print_string "[]";
+  | PCons (x,xs) -> affiche_pattern x; print_string "::"; affiche_pattern xs
 ;;
 
 let rec affiche_expr e =

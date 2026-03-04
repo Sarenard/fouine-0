@@ -48,6 +48,8 @@ python tests/test_codegen.py
 14. (Sarah) Exceptions naives (sans pattern, a fix)
 15. (Sarah) Parsing des let f x = ...
 16. (Sarah) Gérer les tuples sans parenthèses
+17. (Maya) Listes avec parsing litéral
+18. (Maya) Match des listes
 ### Rendu 2
 
 ## Etapes à faire

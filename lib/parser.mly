@@ -144,14 +144,19 @@ pattern_atom:
   | i=INT { PInt i }
   | b=BOOL { PBool b }
   | s=VAR { PVar s }
+  | LBRACKET RBRACKET { PNil }
   | LPAREN RPAREN { PTuple [] }
   | LPAREN p=pattern RPAREN { p }
 
-pattern_tuple:
+pattern_consable:
+  | p1=pattern_atom LST_PREPEND p2=pattern_consable { PCons(p1, p2) }
   | p=pattern_atom { p }
-  | p1=pattern_atom COMMA p2=pattern_atom rest=pattern_more
+
+pattern_tuple:
+  | p=pattern_consable { p }
+  | p1=pattern_consable COMMA p2=pattern_consable rest=pattern_more
       { PTuple (p1 :: p2 :: rest) }
 
 pattern_more:
   | { [] }
-  | COMMA p=pattern_atom rest=pattern_more { p :: rest }
+  | COMMA p=pattern_consable rest=pattern_more { p :: rest }

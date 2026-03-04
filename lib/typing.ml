@@ -84,6 +84,13 @@ let rec pattern_to_ty (pat: pattern) (vars : (ty list ref)) : (ty * infer_env) (
       Tprod (List.map fst mlist),
       List.concat (List.map snd mlist)
     )
+  | PNil -> let nv = new_uvar vars in (nv, [])
+  | PCons (x,xs) ->
+    (match (pattern_to_ty x vars) with
+      | t, env -> (match (pattern_to_ty xs vars) with
+        | ts, envs -> (TList t, env @ envs)
+      )
+    )
 ;;
 
 let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty = 
@@ -104,6 +111,11 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
       let a = new_uvar vars in
       unify u2 (TList a);
       unify u1 a;
+      TList a
+    | "@" -> 
+      let a = new_uvar vars in
+      unify u1 (TList a);
+      unify u2 (TList a);
       TList a
     | op -> failwith ("unknown op : " ^ op)
   )

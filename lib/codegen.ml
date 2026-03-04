@@ -10,6 +10,8 @@ let rec print_pattern fmt pat =
     Format.fprintf fmt "(@[<hv 1>%a@])" (
       Format.(pp_print_list ~pp_sep:(fun out () -> fprintf out ",@ ") (fun _ -> print_pattern fmt))
     ) l
+  | PNil -> Format.fprintf fmt "[]"
+  | PCons (x,xs) -> Format.fprintf fmt "(%a)::(%a)" print_pattern x print_pattern xs
 
 let rec print fmt expression = match expression with
   | Int x -> Format.fprintf fmt "%d" x
