@@ -39,6 +39,10 @@ rule token = parse
   | "begin"           { BEGIN }
   | "end"             { END }
 
+  | "try" { TRY }
+  | "E" { E }
+  | "raise" { RAISE }
+
   | "if"             { IF }
   | "then"             { THEN }
   | "else"             { ELSE }

@@ -32,6 +32,8 @@ let rec can_generalize (expr: expr) : bool = match expr with
     can_generalize e2 || can_generalize e3
   | Fun(pat, e) -> can_generalize e
   | Tuple(lst) -> List.is_empty (List.filter can_generalize lst)
+  | Try (e1, _var, e2) -> can_generalize e1 || can_generalize e2
+  | Raise (_val) -> true
   | LinkedList(lst) -> failwith "todo"
 
 (*TODO : substitution*)
@@ -174,7 +176,15 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
         exp_typ
     ) lst in
     List.hd lstmapped
-  | LinkedList(lst) -> failwith "todo"
+    | Raise (_val) -> 
+      (*because we do naive exceptions, we only return a fresh variable : raise's contents is always an int*)
+      new_uvar vars
+    | Try (e1, var, e2) -> 
+      let t1 = infer env vars e1 in
+      let t2 = infer ((var, ([], Tint))::env) vars e2 in
+      unify t1 t2;
+      t1
+    | LinkedList(lst) -> failwith "todo"
 
 (*Implémente l'unification de deux termes*)
 and unify (t1: ty) (t2 : ty) : unit =

@@ -12,6 +12,7 @@ open Expr
 %token LET IF THEN ELSE IN FUN ARROW REC
 %token L LE G GE NE EQ
 %token EOF
+%token TRY E RAISE
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
 %token <string> VAR
@@ -31,8 +32,9 @@ open Expr
 %right LST_PREPEND
 %left PLUS MINUS
 %left TIMES DIV
+%nonassoc below_COMMA
+%left COMMA
 %right SEQ
-%right ASSIGN
 
 /* PARTIE 4, le point d'entrée ******************************************* */
 %start main             /* "start" signale le point d'entrée du parser: */
@@ -53,12 +55,21 @@ toplevel:
   | e = expression {e}
 
 expression:
-  | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
-  | assignable {$1}
+  | e1=expression SEQ e2=expression { Seq(e1, e2) }
+  | e=tuple_expr { e }
 
-assignable:
-  | e1=expression ASSIGN e2=expression                { App(App(String ":=", e1), e2) }
-  | controwlflow {$1}
+tuple_expr:
+  | e=assign_expr %prec below_COMMA { e }
+  | e1=assign_expr COMMA e2=assign_expr rest=tuple_more
+      { Tuple (e1 :: e2 :: rest) }
+
+tuple_more:
+  | %prec below_COMMA { [] }
+  | COMMA e=assign_expr rest=tuple_more { e :: rest }
+
+assign_expr:
+  | e1=operator ASSIGN e2=assign_expr { App(App(String ":=", e1), e2) }
+  | e=controwlflow { e }
 
 controwlflow:
   | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
@@ -73,6 +84,7 @@ controwlflow:
 
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | MATCH e=expression WITH m=match_inner {Match(e, m)}
+  | TRY e1=expression WITH LPAREN E v=VAR RPAREN ARROW e2=expression {Try(e1, v, e2)}
   | operator {$1}
 
 match_inner:
@@ -111,14 +123,13 @@ applic:
 expr_ident:
   | i=INT {Int i}
   | b=BOOL {Bool b}
+  | RAISE LPAREN E i=INT RPAREN {Raise i}
   | BANG e=expr_ident { App(String "!", e) }
   | s=VAR {String s}
   | LBRACKET RBRACKET { LinkedList [] }
   | LBRACKET e=expr_list_list RBRACKET { LinkedList e }
   | LPAREN RPAREN                    { Tuple [] }
   | LPAREN e=expression RPAREN {e}
-  (*TODO : a tuple is a tuple even without parentheses*)
-  | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 
   | BEGIN END                             { Tuple [] }
   | BEGIN e=expression END                { e }
 
@@ -126,18 +137,21 @@ expr_list_list:
   | x=controwlflow                      { [x] }
   | xs=expr_list_list SEQ x=controwlflow { xs @ [x] }
 
-expr_list:
-  | x=expression                        { [x] }
-  | xs=expr_list COMMA x=expression     { xs @ [x] }
-
 pattern:
-  | i=INT {PInt i}
-  | b=BOOL {PBool b}
-  | LPAREN x=pattern RPAREN  { x } 
-  | LPAREN RPAREN  { PTuple [] }
-  | LPAREN xs=pattern_list COMMA x=pattern RPAREN  { PTuple (xs @ [x]) } 
-  | s=VAR {PVar s}
+  | p=pattern_tuple { p }
 
-pattern_list:
-  | x = pattern { [x] }
-  | xs = pattern_list COMMA x = pattern {xs @ [x] }
+pattern_atom:
+  | i=INT { PInt i }
+  | b=BOOL { PBool b }
+  | s=VAR { PVar s }
+  | LPAREN RPAREN { PTuple [] }
+  | LPAREN p=pattern RPAREN { p }
+
+pattern_tuple:
+  | p=pattern_atom { p }
+  | p1=pattern_atom COMMA p2=pattern_atom rest=pattern_more
+      { PTuple (p1 :: p2 :: rest) }
+
+pattern_more:
+  | { [] }
+  | COMMA p=pattern_atom rest=pattern_more { p :: rest }

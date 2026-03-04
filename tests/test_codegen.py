@@ -36,7 +36,6 @@ def test(file):
             )
     except subprocess.CalledProcessError as e:
         err = True
-    # TODO : better handle when error (relaunch fouine in debug mode ?)
     try:
         if err or fouine_result.stderr != fouine_rewrite_result.stderr:
             cprint(f"Error not conform in {file}", "red")

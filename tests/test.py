@@ -2,7 +2,7 @@ from colorprint import colorprint as cprint
 import subprocess
 import os
 
-prelude = "let prInt x = print_int x;print_newline(); x;;"
+prelude = "let prInt x = print_int x;print_newline(); x;;exception E of int;;"
 
 def test_ok(file):
     err = False
@@ -30,7 +30,6 @@ def test_ok(file):
             )
     except subprocess.CalledProcessError as e:
         err = True
-    # TODO : better handle when error (relaunch fouine in debug mode ?)
     try:
         if err or fouine_result.stderr != caml_result.stderr:
             cprint(f"Error not conform in {file}", "red")

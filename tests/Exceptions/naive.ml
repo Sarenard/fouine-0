@@ -1,0 +1,1 @@
+try (raise (E 3)) with (E n) -> prInt n

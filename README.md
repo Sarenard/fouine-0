@@ -45,16 +45,16 @@ python tests/test_codegen.py
 10. (Sarah) Typage monomorphe des entiers et booléens
 11. (Sarah) Typage (tout sauf le polymorphisme)
 12. (Maya) Option -showsrc avec tests
+14. (Sarah) Exceptions naives (sans pattern, a fix)
+15. (Sarah) Parsing des let f x = ...
+16. (Sarah) Gérer les tuples sans parenthèses
 ### Rendu 2
 
 ## Etapes à faire
-1. Gérer les tuples sans parenthèses
-2. Listes
-3. Erreurs
-4. Typage avec polymorphisme
-5. Parsing des let f x = ...
-6. Types algébriques
-7. Continuiations
+1. Listes
+2. Typage avec polymorphisme
+3. Types algébriques
+4. Continuiations
 
 # Fun sideprojects done
 Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier de tests.
