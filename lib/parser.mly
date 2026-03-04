@@ -84,7 +84,7 @@ controwlflow:
 
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | MATCH e=expression WITH m=match_inner {Match(e, m)}
-  | TRY e1=expression WITH LPAREN E v=VAR RPAREN ARROW e2=expression {Try(e1, v, e2)}
+  | TRY e1=expression WITH m=match_inner {Try(e1, m)}
   | operator {$1}
 
 match_inner:
@@ -123,7 +123,7 @@ applic:
 expr_ident:
   | i=INT {Int i}
   | b=BOOL {Bool b}
-  | RAISE LPAREN E i=INT RPAREN {Raise i}
+  | RAISE LPAREN E e=expression RPAREN {Raise e}
   | BANG e=expr_ident { App(String "!", e) }
   | s=VAR {String s}
   | LBRACKET RBRACKET { LinkedList [] }
@@ -145,6 +145,7 @@ pattern_atom:
   | b=BOOL { PBool b }
   | s=VAR { PVar s }
   | LBRACKET RBRACKET { PNil }
+  | E p=pattern_atom { PE p } 
   | LPAREN RPAREN { PTuple [] }
   | LPAREN p=pattern RPAREN { p }
 

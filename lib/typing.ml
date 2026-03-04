@@ -32,7 +32,9 @@ let rec can_generalize (expr: expr) : bool = match expr with
     can_generalize e2 || can_generalize e3
   | Fun(pat, e) -> can_generalize e
   | Tuple(lst) -> List.is_empty (List.filter can_generalize lst)
-  | Try (e1, _var, e2) -> can_generalize e1 || can_generalize e2
+  | Try (e1, lst) -> 
+    can_generalize e1 
+    || (List.is_empty (List.filter (fun (a, b) -> can_generalize b) lst)) 
   | Raise (_val) -> true
   | LinkedList(lst) -> failwith "todo"
 
@@ -90,6 +92,13 @@ let rec pattern_to_ty (pat: pattern) (vars : (ty list ref)) : (ty * infer_env) (
       | t, env -> (match (pattern_to_ty xs vars) with
         | ts, envs -> (TList t, env @ envs)
       )
+    )
+  | PE (v) -> (
+    let nv = new_uvar vars in
+    match v with
+    | PVar x -> (nv, [(x, ([], nv))])
+    | PInt k -> (nv, [])
+    | _ -> failwith "unreachable"
     )
 ;;
 
@@ -197,11 +206,19 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
     | Raise (_val) -> 
       (*because we do naive exceptions, we only return a fresh variable : raise's contents is always an int*)
       new_uvar vars
-    | Try (e1, var, e2) -> 
-      let t1 = infer env vars e1 in
-      let t2 = infer ((var, ([], Tint))::env) vars e2 in
-      unify t1 t2;
-      t1
+    | Try (e1, lst) -> 
+      let newvar = new_uvar vars in
+      let exprty = infer env vars e1 in
+      let lstmapped = List.map (
+        fun (pat, exp) -> 
+          let (ptype, bindings) = pattern_to_ty pat vars in
+          let newenv = bindings @ env in
+          let exp_typ = infer newenv vars exp in
+          unify exprty ptype;
+          unify newvar exp_typ;
+          exp_typ
+      ) lst in
+      List.hd lstmapped
     | LinkedList(lst) -> 
       let a = new_uvar vars in
       List.iter

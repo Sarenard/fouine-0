@@ -17,14 +17,15 @@ let rec pattern_match (pat: pattern) (value: valeur) : ((string*valeur) list) op
   | (PVar x, value) -> if x = "_" then Some [] else Some [(x,value)]
   | (PTuple patlist, VT valuelist) ->
     pattern_match_list [] patlist valuelist
-  | (PNil, VL []) -> Some []
-  | (PCons(x,xs), VL(y::ys)) -> (match (pattern_match xs (VL ys)) with
+    | (PNil, VL []) -> Some []
+    | (PCons(x,xs), VL(y::ys)) -> (match (pattern_match xs (VL ys)) with
     | Some l -> (match (pattern_match x y) with
-      | Some l' -> Some (l @ l')
-      | None -> None
+    | Some l' -> Some (l @ l')
+    | None -> None
     )
     | None -> None
     )
+  | (PE pat, VE valeur) -> pattern_match pat valeur
   | _ -> None
 and pattern_match_list (stack : (string*valeur) list) (pat : pattern list) (vals : valeur list)
   : (string*valeur) list option = match (pat, vals) with
@@ -147,24 +148,17 @@ let rec eval (value : expr) (env : (string * valeur) list) :
       Ok (VL vs)
   | Match(e1, lst) ->
     let* v1 = eval e1 env in 
-    let rec search mylst = (
-      match mylst with 
-      | [] -> failwith "Pattern non trouvé !!";
-      | (p, e2)::xs -> 
-        let pm = pattern_match p v1 in (
-          match pm with
-          | None -> search xs
-          | Some plst -> eval e2 (plst@env)
-        )
-    )
-    in search lst;
-  | Try (e1, var, e2) -> 
-    (match eval e1 env with
-    | Ok v1 -> Ok v1
-    | Error (VI value) -> 
-      let newenv = (var, VI value)::env in eval e2 newenv
-    | _ -> failwith "unreachable");
-  | Raise value -> error (VI value)
+    search lst v1 env;
+  | Try (e1, lst) -> (
+      match eval e1 env with
+      | Ok v1 -> Ok v1
+      | Error v -> search lst v env
+    );
+  | Raise(e) ->
+    let* v = eval e env in
+    match v with
+    | VI n -> error (VE (VI n))
+    | _ -> failwith "E a besoin d'un int"
 
 and opint env func e1 e2 = 
   let* v2 = (eval e2 env) in let* v1 = (eval e1 env) in
@@ -190,4 +184,16 @@ and opilist env func e1 e2 =
   let* v2 = (eval e2 env) in let* v1 = (eval e1 env) in
     match (v1, v2) with
       | (VL x, VL y) -> Ok (VL (func x y))
-      | _ -> raise WrongType;;
+      | _ -> raise WrongType
+
+and search mylst v1 env = (
+  match mylst with 
+  | [] -> failwith "Pattern non trouve !!";
+  | (p, e2)::xs -> 
+    let pm = pattern_match p v1 in (
+      match pm with
+      | None -> search xs v1 env
+      | Some plst -> eval e2 (plst@env)
+    )
+  )
+;;

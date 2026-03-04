@@ -10,6 +10,7 @@ let rec print_pattern fmt pat =
     Format.fprintf fmt "(@[<hv 1>%a@])" (
       Format.(pp_print_list ~pp_sep:(fun out () -> fprintf out ",@ ") (fun _ -> print_pattern fmt))
     ) l
+  | PE pat -> Format.fprintf fmt "(E %a)" print_pattern pat
   | PNil -> Format.fprintf fmt "[]"
   | PCons (x,xs) -> Format.fprintf fmt "(%a)::(%a)" print_pattern x print_pattern xs
 
@@ -35,6 +36,8 @@ let rec print fmt expression = match expression with
   | Match(e1,lst) -> Format.fprintf fmt "(@[<v 1>@[<hv 1>match@ %a@ with@]@ %a@])" print e1 (
     Format.(pp_print_list (fun _ -> (fun (p,e) -> Format.fprintf fmt "| @[<hv 1>@[%a@]@ ->@ @[%a@]@]" print_pattern p print e)))
   ) lst
-  | Try (e1, var, e2) ->
-    Format.fprintf fmt "@[<hv 1>try@ @[%a@]with@ (E %s) ->@ @[%a@]@]" print e1 var print e2 
-  | Raise (value) -> Format.fprintf fmt "@[<hv 1>raise (E %d) @]" value
+  | Try (e1, lst) ->
+    Format.fprintf fmt "(@[<v 1>@[<hv 1>try@ %a@ with@]@ %a@])" print e1 (
+    Format.(pp_print_list (fun _ -> (fun (p,e) -> Format.fprintf fmt "| @[<hv 1>@[%a@]@ ->@ @[%a@]@]" print_pattern p print e)))
+  ) lst
+  | Raise (e) -> Format.fprintf fmt "@[<hv 1>raise (E %a) @]" print e

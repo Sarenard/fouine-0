@@ -15,9 +15,9 @@ type expr =
   | Seq of expr*expr
   | Match of expr*((pattern*expr) list)
   | LinkedList of expr list
-  (*TODO : make this better*)
-  | Try of expr*string*expr (*try expr with (E var) -> expr*)
-  | Raise of int
+  | Try of expr*((pattern*expr) list)
+  (*to allow Raise E 3 and raise E x*)
+  | Raise of expr
 
 and pattern = 
   | PTuple of pattern list
@@ -26,6 +26,7 @@ and pattern =
   | PVar of string
   | PNil
   | PCons of pattern*pattern
+  | PE of pattern (*E <n> ou E <int>, hardcodé temporairement*)
 ;;
 
 let rec affiche_pattern pat = match pat with
@@ -41,6 +42,10 @@ let rec affiche_pattern pat = match pat with
     print_string ")"
   | PNil -> print_string "[]";
   | PCons (x,xs) -> affiche_pattern x; print_string "::"; affiche_pattern xs
+  | PE (pat) -> 
+    print_string "PE(";
+    affiche_pattern pat;
+    print_string ")";
 ;;
 
 let rec affiche_expr e =
@@ -65,14 +70,12 @@ let rec affiche_expr e =
     print_string ", [";
     List.iter (fun (x, y) -> affiche_pattern x; print_string " -> "; affiche_expr y; print_string ", ") lst;
     print_string "])";
-  | Try(e1, var, e2) ->
+  | Try(e1, lst) ->
     print_string "Try(";
     affiche_expr e1;
-    print_string ", ";
-    print_string var;
-    print_string ", ";
-    affiche_expr e2;
-    print_string ")";
+    print_string ", [";
+    List.iter (fun (x, y) -> affiche_pattern x; print_string " -> "; affiche_expr y; print_string ", ") lst;
+    print_string "])";
   | Op(name, e1,e2) ->
     print_string "Op(";
     print_string name;
@@ -115,9 +118,9 @@ let rec affiche_expr e =
     List.iter (fun x -> affiche_expr x; print_string ", ") lst;
     print_string ")";
   )
-  | Raise (value) -> 
+  | Raise (e1) -> 
     print_string "Raise(";
-    print_int value;
+    affiche_expr e1;
     print_string ")";
 
 (*valeurs*)
@@ -130,6 +133,7 @@ type valeur =
   | VF_buildin of (heap -> env -> valeur -> valeur)
   | VT of valeur list
   | VL of valeur list
+  | VE of valeur
   | Boom
 
   (*environments*)
@@ -167,6 +171,8 @@ let rec affiche_val v =
   )
   | VF_buildin(_) -> 
     print_string "Buildin_func";
+  | VE (x) ->
+    print_string "E("; affiche_val x; print_string ")";
   | Boom -> print_string "Boom"
 
 let rec compare_val val1 val2 = match (val1, val2) with
