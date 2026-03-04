@@ -1,5 +1,6 @@
 open Expr
 open Exceptions
+open Result
 
 let size = 1000;;
 let heap = {
@@ -27,22 +28,26 @@ and pattern_match_list (stack : (string*valeur) list) (pat : pattern list) (vals
   );
 ;;
 
+let ( let* ) = Result.bind;;
+
 (* évaluation d'une expression en une valeur *)
-let rec eval value env = match value with 
-  | Int k -> VI k
-  | Bool b -> VB b
+let rec eval (value : expr) (env : (string * valeur) list) : 
+  (valeur, valeur) result = 
+  match value with 
+  | Int k -> ok (VI k)
+  | Bool b -> ok (VB b)
   | String s -> (match List.assoc_opt s env with 
-    | Some v1 -> v1
+    | Some v1 -> ok v1
     | None -> raise (UnknownVariable s))
   | If(e1, e2, e3) -> 
-    let v = eval e1 env in (
+    let* v = eval e1 env in (
       match v with
-      | (VB true) -> eval e2 env
-      | (VB false) -> eval e3 env
+      | VB true -> eval e2 env
+      | VB false -> eval e3 env
       | _ -> raise WrongType
     )
   | App(e1, e2) -> 
-    let v1, v2 = eval e1 env, eval e2 env in (
+    let* v1 = eval e1 env in let* v2 = eval e2 env in (
       match v1 with 
       | VF(env, pattern, e) -> (
         (*eval e (((x, v2))::env);*)
@@ -52,12 +57,12 @@ let rec eval value env = match value with
           | Some plst -> eval e (plst@env)
         )
       )
-      | VF_buildin(func) -> (func heap env v2);
+      | VF_buildin(func) -> ok (func heap env v2);
       | _ -> raise WrongType;
     )
   (*TODO : handle _*)
   | Let(pat, e1, e2, false) -> 
-    let v1 = eval e1 env in
+    let* v1 = eval e1 env in
     let pat_list = pattern_match pat v1 in 
     (
       match pat_list with 
@@ -68,7 +73,7 @@ let rec eval value env = match value with
   | Let(pat, e1, e2, true) -> (match pat with
     (*force pat to be a val only for now*)
     | PVar s -> (
-        let v1 = eval e1 env in (
+        let* v1 = eval e1 env in (
         match v1 with
         | VF(env, pat, expr) -> (
             let rec new_env = ((s, VF(new_env, pat, expr))::env) in
@@ -78,7 +83,7 @@ let rec eval value env = match value with
       ))
     | _ -> raise UnimplementedError
   )
-  | Fun(pat, e) -> VF(env, pat, e)
+  | Fun(pat, e) -> ok (VF(env, pat, e));
   | Op (name, e1, e2) -> (
     let func = match name with
       | "+" -> opint env ( + )
@@ -90,30 +95,37 @@ let rec eval value env = match value with
       | ">" -> opibool env ( > )
       | ">=" -> opibool env ( >= )
       | "&&" -> fun e1 e2 -> (
-        let v1 = eval e1 env in match v1 with
-        | VB false -> VB false
-        | VB true -> (let v2 = eval e2 env in match v2 with
-          | (VB k2) -> VB k2
+        let* v1 = eval e1 env in match v1 with
+        | VB false -> ok (VB false)
+        | VB true -> (let* v2 = eval e2 env in match v2 with
+          | (VB k2) -> ok (VB k2)
           | _ -> raise WrongType)
         | _ -> raise WrongType
       ) 
       | "||" -> fun e1 e2 -> (
-        let v1 = eval e1 env in match v1 with
-        | VB true -> VB true
-        | VB false -> (let v2 = eval e2 env in match v2 with
-          | (VB k2) -> VB k2
+        let* v1 = eval e1 env in match v1 with
+        | VB true -> ok (VB true)
+        | VB false -> (let* v2 = eval e2 env in match v2 with
+          | (VB k2) -> ok (VB k2)
           | _ -> raise WrongType)
         | _ -> raise WrongType
       ) 
-      | "=" -> (fun x y -> VB (compare_val (eval x env) (eval y env)))
-      | "<>" -> (fun x y -> VB (not (compare_val (eval x env) (eval y env))))
+      | "=" -> (fun x y -> 
+        let* v1 = eval x env in
+        let* v2 = eval y env in
+        ok (VB (compare_val v1 v2)))
+      | "<>" -> (fun x y -> 
+        let* v1 = eval x env in
+        let* v2 = eval y env in
+        ok (VB (not (compare_val v1 v2))))
       | _ -> (fun _ _ -> raise UnimplementedError)
     in func e1 e2
     )
-  | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))
+  | Tuple lst ->
+    eval_list env lst |> Result.map (fun vs -> VT vs)
   | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
   | Match(e1, lst) ->
-    let v1 = eval e1 env in 
+    let* v1 = eval e1 env in 
     let rec search mylst = (
       match mylst with 
       | [] -> failwith "Pattern non trouvé !!";
@@ -125,17 +137,31 @@ let rec eval value env = match value with
         )
     )
     in search lst;
-
+  | Try (e1, var, e2) -> 
+    (match eval e1 env with
+    | Ok v1 -> Ok v1
+    | Error (VI value) -> 
+      let newenv = (var, VI value)::env in eval e2 newenv
+    | _ -> failwith "unreachable");
+  | Raise value -> error (VI value)
 
 and opint env func e1 e2 = 
-  let v2 = (eval e2 env) in let v1 = (eval e1 env) in
+  let* v2 = (eval e2 env) in let* v1 = (eval e1 env) in
     match (v1, v2) with
-      | (VI x, VI y) -> (VI (func x y))
+      | (VI x, VI y) -> ok (VI (func x y))
       | _ -> raise WrongType
 
 and opibool env func e1 e2 = 
-  let v2 = (eval e2 env) in let v1 = (eval e1 env) in
+  let* v2 = (eval e2 env) in let* v1 = (eval e1 env) in
     match (v1, v2) with
-      | (VI x, VI y) -> (VB (func x y))
-      | _ -> raise WrongType;;
+      | (VI x, VI y) -> ok (VB (func x y))
+      | _ -> raise WrongType
+
+and eval_list env lst =
+  match lst with
+  | [] -> Ok []
+  | x :: xs ->
+      let* v  = eval x env in
+      let* vs = eval_list env xs in
+      Ok (v :: vs)
 

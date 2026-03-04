@@ -2,7 +2,7 @@ from colorprint import colorprint as cprint
 import subprocess
 import os
 
-prelude = "let prInt x = print_int x;print_newline(); x;;"
+prelude = "let prInt x = print_int x;print_newline(); x;;exception E of int;;"
 
 def test_ok(file):
     err = False

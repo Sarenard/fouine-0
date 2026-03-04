@@ -12,6 +12,7 @@ open Expr
 %token LET IF THEN ELSE IN FUN ARROW REC
 %token L LE G GE NE EQ
 %token EOF
+%token TRY E RAISE
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
 %token <string> VAR
@@ -67,6 +68,7 @@ controwlflow:
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | e1=expression ASSIGN e2=expression                { App(App(String ":=", e1), e2) }
   | MATCH e=expression WITH m=match_inner {Match(e, m)}
+  | TRY e1=expression WITH LPAREN E v=VAR RPAREN ARROW e2=expression {Try(e1, v, e2)}
   | operator {$1}
 
 match_inner:
@@ -103,6 +105,7 @@ applic:
 expr_ident:
   | i=INT {Int i}
   | b=BOOL {Bool b}
+  | RAISE LPAREN E i=INT RPAREN {Raise i}
   | BANG e=expr_ident { App(String "!", e) }
   | s=VAR {String s}
   | LPAREN RPAREN                    { Tuple [] }

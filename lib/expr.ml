@@ -14,6 +14,8 @@ type expr =
   | Op of string*expr*expr
   | Seq of expr*expr
   | Match of expr*((pattern*expr) list)
+  | Try of expr*string*expr (*try expr with (E var) -> expr*)
+  | Raise of int
 
 and pattern = 
   | PTuple of pattern list
@@ -57,6 +59,14 @@ let rec affiche_expr e =
     print_string ", [";
     List.iter (fun (x, y) -> affiche_pattern x; print_string " -> "; affiche_expr y; print_string ", ") lst;
     print_string "])";
+  | Try(e1, var, e2) ->
+    print_string "Try(";
+    affiche_expr e1;
+    print_string ", ";
+    print_string var;
+    print_string ", ";
+    affiche_expr e2;
+    print_string ")";
   | Op(name, e1,e2) ->
     print_string "Op(";
     print_string name;
@@ -94,6 +104,10 @@ let rec affiche_expr e =
     List.iter (fun x -> affiche_expr x; print_string ", ") lst;
     print_string ")";
   )
+  | Raise (value) -> 
+    print_string "Raise(";
+    print_int value;
+    print_string ")";
 
 (*valeurs*)
 type valeur = 
@@ -139,8 +153,8 @@ let rec affiche_val v =
   | Boom -> print_string "Boom"
 
 let rec compare_val val1 val2 = match (val1, val2) with
-  | (VB k1,VB k2) -> (k1 = k2)
-  | (VI k1,VI k2) -> (k1 = k2)
+  | (VB k1, VB k2) -> (k1 = k2)
+  | (VI k1, VI k2) -> (k1 = k2)
   | (VT lst1, VT lst2) -> compare_tuple compare_val lst1 lst2
   (*what about refs?*)
   | _ -> false
