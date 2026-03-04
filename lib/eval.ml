@@ -9,6 +9,7 @@ let heap = {
   size = size;
 };;
 
+(*gestion récursive des patterns*)
 let rec pattern_match (pat: pattern) (value: valeur) : ((string*valeur) list) option = 
   match (pat, value) with
   | (PInt k1, VI k2) when k1 = k2 -> Some []
@@ -39,6 +40,7 @@ and pattern_match_list (stack : (string*valeur) list) (pat : pattern list) (vals
 let ( let* ) = Result.bind;;
 
 (* évaluation d'une expression en une valeur *)
+(*On fait de façon monadique avec Result*)
 let rec eval (value : expr) (env : (string * valeur) list) : 
   (valeur, valeur) result = 
   match value with 
@@ -92,6 +94,7 @@ let rec eval (value : expr) (env : (string * valeur) list) :
   )
   | Fun(pat, e) -> ok (VF(env, pat, e));
   | Op (name, e1, e2) -> (
+    (*une fonction auxiliaire pour les opérateurs de base*)
     let func = match name with
       | "+" -> opint env ( + )
       | "-" -> opint env ( - )
@@ -108,6 +111,7 @@ let rec eval (value : expr) (env : (string * valeur) list) :
         | VL l -> ok (VL (v1::l))
         | _ -> raise WrongType
       )
+      (*duplication de code car les optimisations ne sont pas les mêmes pour && et ||*)
       | "&&" -> fun e1 e2 -> (
         let* v1 = eval e1 env in match v1 with
         | VB false -> ok (VB false)
