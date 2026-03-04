@@ -56,6 +56,7 @@ let generalize (term: ty) : (var list * ty) =
     | Tref t -> Tref t
     | Tpolyvar v -> Tpolyvar v
     | Tprod ts -> Tprod (List.map replace ts)
+    | TList t -> TList (replace t)
     | Tarr (a, b) -> Tarr (replace a, replace b)
     | Tuvar r -> (
         match !r with
@@ -99,7 +100,12 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
       unify u1 Tbool; unify u2 Tbool; Tbool
     | "=" | "<>" -> 
       unify u1 u2; Tbool
-    | _ -> raise UnimplementedError
+    | "::" -> 
+      let a = new_uvar vars in
+      unify u2 (TList a);
+      unify u1 a;
+      TList a
+    | op -> failwith ("unknown op : " ^ op)
   )
   | Int _ -> Tint
   | Bool _ -> Tbool
@@ -184,7 +190,14 @@ let rec infer (env : infer_env) (vars: (ty list ref)) (expr: expr) : ty =
       let t2 = infer ((var, ([], Tint))::env) vars e2 in
       unify t1 t2;
       t1
-    | LinkedList(lst) -> failwith "todo"
+    | LinkedList(lst) -> 
+      let a = new_uvar vars in
+      List.iter
+        (fun e ->
+          let t = infer env vars e in
+          unify t a)
+        lst;
+      TList a
 
 (*Implémente l'unification de deux termes*)
 and unify (t1: ty) (t2 : ty) : unit =
@@ -197,6 +210,8 @@ and unify (t1: ty) (t2 : ty) : unit =
     unify b d;
   | (Tprod t1, Tprod t2) ->
     List.iter2 unify t1 t2;
+  | (TList t1, TList t2) ->
+    unify t1 t2;
   | (Tref a, Tref b) ->
     unify a b;
   | (Tuvar r1, Tuvar r2) when r1 == r2 ->

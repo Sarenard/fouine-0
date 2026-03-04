@@ -234,6 +234,7 @@ type ty =
   | Tprod of ty list
   | Tarr of ty * ty 
   | Tref of ty
+  | TList of ty
 
 type infer_env = (var * (var list * ty)) list
 
@@ -260,6 +261,7 @@ let string_of_ty (t : ty) : string =
     | Tbool -> "bool"
 
     | Tref t -> "ref " ^ make_str prec t
+    | TList t -> make_str prec t ^ " list"
     
     | Tuvar r -> (
         match !r with
@@ -287,6 +289,7 @@ let string_of_ty (t : ty) : string =
 let rec canonic (t : ty) : ty =
   match t with
   | Tint | Tbool | Tpolyvar _ -> t
+  | TList t -> TList (canonic t)
   | Tuvar r -> (
       match !r with
       | None -> t
@@ -306,6 +309,7 @@ let rec canonic (t : ty) : ty =
 let rec replace_polyvar (sb : subst) (term: ty) : ty = 
   match term with
   | Tint | Tbool | Tuvar _ -> term
+  | TList t -> TList (replace_polyvar sb t)
   | Tpolyvar w -> (
       match List.assoc_opt w sb with
       | None -> raise FreePolyVar
