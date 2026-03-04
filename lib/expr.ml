@@ -14,6 +14,7 @@ type expr =
   | Op of string*expr*expr
   | Seq of expr*expr
   | Match of expr*((pattern*expr) list)
+  (*TODO : make this better*)
   | Try of expr*string*expr (*try expr with (E var) -> expr*)
   | Raise of int
 
