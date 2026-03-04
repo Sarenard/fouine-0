@@ -14,6 +14,7 @@ type expr =
   | Op of string*expr*expr
   | Seq of expr*expr
   | Match of expr*((pattern*expr) list)
+  | LinkedList of expr list
 
 and pattern = 
   | PTuple of pattern list
@@ -89,6 +90,11 @@ let rec affiche_expr e =
 	  print_string ", ";
     affiche_expr e;
     print_string ")";)
+  | LinkedList(lst) -> (
+    print_string "List(";
+    List.iter (fun x -> affiche_expr x; print_string ", ") lst;
+    print_string ")";
+  )
   | Tuple(lst) -> (
     print_string "Tuple(";
     List.iter (fun x -> affiche_expr x; print_string ", ") lst;
@@ -104,6 +110,7 @@ type valeur =
   (*Thx zoé for the idea*)
   | VF_buildin of (heap -> env -> valeur -> valeur)
   | VT of valeur list
+  | VL of valeur list
   | Boom
 
   (*environments*)
@@ -129,6 +136,11 @@ let rec affiche_val v =
     print_string ", ";
     affiche_expr e; 
     print_string ")";
+   | VL(lst) -> (
+    print_string "[";
+    List.iter (fun x -> affiche_val x; print_string "; ") lst;
+    print_string "]";
+  )
   | VT(lst) -> (
     print_string "(";
     List.iter (fun x -> affiche_val x; print_string ", ") lst;

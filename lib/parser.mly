@@ -15,6 +15,7 @@ open Expr
 %token <int> INT       /* le lexème INT a un attribut entier */
 %token <bool> BOOL
 %token <string> VAR
+%token LST_PREPEND LST_CONCAT LBRACKET RBRACKET
 
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
@@ -26,6 +27,8 @@ open Expr
 %left EQ
 %right AND
 %right OR
+%right LST_CONCAT
+%right LST_PREPEND
 %left PLUS MINUS
 %left TIMES DIV
 %right SEQ
@@ -49,8 +52,12 @@ toplevel:
   | LET REC e1=pattern EQ e2=expression SEQQ e3=expression { Let(e1,e2,e3, true) }
   | e = expression {e}
 
-expression:			   
+expression:
   | e1 = expression SEQ e2 = expression { Seq(e1, e2) } 
+  | assignable {$1}
+
+assignable:
+  | e1=expression ASSIGN e2=expression                { App(App(String ":=", e1), e2) }
   | controwlflow {$1}
 
 controwlflow:
@@ -65,7 +72,6 @@ controwlflow:
   | LET REC s=VAR e2=pattern+ EQ e3=expression IN e4=expression { Let(PVar s, (List.fold_right (fun x acc -> Fun(x, acc)) e2 e3), e4, true) }
 
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
-  | e1=expression ASSIGN e2=expression                { App(App(String ":=", e1), e2) }
   | MATCH e=expression WITH m=match_inner {Match(e, m)}
   | operator {$1}
 
@@ -93,6 +99,8 @@ operator:
   | e1 = operator NE e2 = operator { Op("<>", e1, e2) }
   | e1 = operator L e2 = operator { Op("<", e1, e2) }
   | e1 = operator G e2 = operator { Op(">", e1, e2) }
+  | e1 = operator LST_PREPEND e2 = operator { Op("::", e1, e2) }
+  | e1 = operator LST_CONCAT e2 = operator { Op("@", e1, e2) }
   | MINUS e=operator { Op("-", Int 0, e)}
   | e = applic { e }
 
@@ -105,12 +113,18 @@ expr_ident:
   | b=BOOL {Bool b}
   | BANG e=expr_ident { App(String "!", e) }
   | s=VAR {String s}
+  | LBRACKET RBRACKET { LinkedList [] }
+  | LBRACKET e=expr_list_list RBRACKET { LinkedList e }
   | LPAREN RPAREN                    { Tuple [] }
   | LPAREN e=expression RPAREN {e}
   (*TODO : a tuple is a tuple even without parentheses*)
   | LPAREN xs=expr_list COMMA x=expression RPAREN            { Tuple (xs @ [x]) } 
   | BEGIN END                             { Tuple [] }
   | BEGIN e=expression END                { e }
+
+expr_list_list:
+  | x=controwlflow                      { [x] }
+  | xs=expr_list_list SEQ x=controwlflow { xs @ [x] }
 
 expr_list:
   | x=expression                        { [x] }

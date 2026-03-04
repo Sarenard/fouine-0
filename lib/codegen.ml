@@ -22,6 +22,9 @@ let rec print fmt expression = match expression with
   | App(App(String ":=", e1), e2) -> Format.fprintf fmt "(@[<hv 1>%a :=@ %a@])" print e1 print e2
   | App(e1,e2) -> Format.fprintf fmt "@[<hv 1>(@[%a@]@ @[%a@])@]" print e1 print e2
   | Tuple [] -> Format.fprintf fmt "()"
+  | LinkedList l -> Format.fprintf fmt "[@[<hv 1>%a@]]" (
+      Format.(pp_print_list ~pp_sep:(fun out () -> fprintf out ";@ ") (fun _ -> print fmt))
+    ) l
   | Tuple l -> Format.fprintf fmt "(@[<hv 1>%a@])" (
       Format.(pp_print_list ~pp_sep:(fun out () -> fprintf out ",@ ") (fun _ -> print fmt))
     ) l

@@ -29,6 +29,11 @@ rule token = parse
   | ">="             { GE }
   | "<>"             { NE }
 
+  | "::"            { LST_PREPEND }
+  | "@"             { LST_CONCAT }
+  | "["             { LBRACKET }
+  | "]"             { RBRACKET }
+
   | '('             { LPAREN }
   | ')'             { RPAREN }
   | "begin"           { BEGIN }

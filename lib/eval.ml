@@ -89,6 +89,13 @@ let rec eval value env = match value with
       | "<=" -> opibool env ( <= )
       | ">" -> opibool env ( > )
       | ">=" -> opibool env ( >= )
+      | "@" -> opilist env ( @ )
+      | "::" -> fun e1 e2 -> (
+        let v1 = eval e1 env in
+        let v2 = eval e2 env in match v2 with
+        | VL l -> VL (v1::l)
+        | _ -> raise WrongType
+      )
       | "&&" -> fun e1 e2 -> (
         let v1 = eval e1 env in match v1 with
         | VB false -> VB false
@@ -112,6 +119,7 @@ let rec eval value env = match value with
     )
   | Tuple(lst) -> VT (List.rev (List.map (fun x -> eval x env) (List.rev lst)))
   | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
+  | LinkedList(lst) -> VL (List.rev (List.map (fun x -> eval x env) (List.rev lst)))
   | Match(e1, lst) ->
     let v1 = eval e1 env in 
     let rec search mylst = (
@@ -126,7 +134,6 @@ let rec eval value env = match value with
     )
     in search lst;
 
-
 and opint env func e1 e2 = 
   let v2 = (eval e2 env) in let v1 = (eval e1 env) in
     match (v1, v2) with
@@ -137,5 +144,10 @@ and opibool env func e1 e2 =
   let v2 = (eval e2 env) in let v1 = (eval e1 env) in
     match (v1, v2) with
       | (VI x, VI y) -> (VB (func x y))
-      | _ -> raise WrongType;;
+      | _ -> raise WrongType
 
+and opilist env func e1 e2 = 
+  let v2 = (eval e2 env) in let v1 = (eval e1 env) in
+    match (v1, v2) with
+      | (VL x, VL y) -> (VL (func x y))
+      | _ -> raise WrongType;;
