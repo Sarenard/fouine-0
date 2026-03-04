@@ -60,7 +60,6 @@ let rec eval (value : expr) (env : (string * valeur) list) :
       | VF_buildin(func) -> ok (func heap env v2);
       | _ -> raise WrongType;
     )
-  (*TODO : handle _*)
   | Let(pat, e1, e2, false) -> 
     let* v1 = eval e1 env in
     let pat_list = pattern_match pat v1 in 
@@ -122,7 +121,7 @@ let rec eval (value : expr) (env : (string * valeur) list) :
     in func e1 e2
     )
   | Tuple lst ->
-    eval_list env lst |> Result.map (fun vs -> VT vs)
+    List.rev lst |> eval_list env |> Result.map (fun vs -> VT (List.rev vs))
   | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
   | Match(e1, lst) ->
     let* v1 = eval e1 env in 
