@@ -53,15 +53,13 @@ python tests/test_codegen.py
 ### Rendu 2
 
 ## Etapes à faire
-1. Listes
-2. Typage avec polymorphisme
 3. Types algébriques
-4. Continuiations
+4. Continuations
 
 # Fun sideprojects done
-Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier de tests.
+Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier "Fun" dans le dossier de tests.
 
-Command pour tester :
+Command pour tester (calcul de 2^5) :
 ```
 echo 5 | perl -ne 'chomp; print "+>".("+" x $_)."[-<[->>++<<]>>[-<<+>>]<]<.\n"' | xargs -I{} python tests/Fun/bf.py "{}" --standalone | _build/default/bin/fouine.exe
 ```
