@@ -9,7 +9,8 @@ let heap = {
   size = size;
 };;
 
-(*gestion récursive des patterns*)
+(* Etant donnés un pattern et une valeur, on produit None si le pattern ne correspond pas,
+sinon une liste de bindings *)
 let rec pattern_match (pat: pattern) (value: valeur) : ((string*valeur) list) option = 
   match (pat, value) with
   | (PInt k1, VI k2) when k1 = k2 -> Some []
@@ -19,10 +20,10 @@ let rec pattern_match (pat: pattern) (value: valeur) : ((string*valeur) list) op
     pattern_match_list [] patlist valuelist
     | (PNil, VL []) -> Some []
     | (PCons(x,xs), VL(y::ys)) -> (match (pattern_match xs (VL ys)) with
-    | Some l -> (match (pattern_match x y) with
-    | Some l' -> Some (l @ l')
-    | None -> None
-    )
+      | Some l -> (match (pattern_match x y) with
+        | Some l' -> Some (l @ l')
+        | None -> None
+      )
     | None -> None
     )
   | (PE pat, VE valeur) -> pattern_match pat valeur
@@ -159,7 +160,7 @@ let rec eval (value : expr) (env : (string * valeur) list) :
     match v with
     | VI n -> error (VE (VI n))
     | _ -> failwith "E a besoin d'un int"
-
+(* wrapper pour gerer les operateurs entiers de fouine avec les operateurs natifs de caml *)
 and opint env func e1 e2 = 
   let* v2 = (eval e2 env) in let* v1 = (eval e1 env) in
     match (v1, v2) with
@@ -185,7 +186,7 @@ and opilist env func e1 e2 =
     match (v1, v2) with
       | (VL x, VL y) -> Ok (VL (func x y))
       | _ -> raise WrongType
-
+(* recherche le bon pattern dans un match with *)
 and search mylst v1 env = (
   match mylst with 
   | [] -> failwith "Pattern non trouve !!";

@@ -14,6 +14,7 @@ let rec print_pattern fmt pat =
   | PNil -> Format.fprintf fmt "[]"
   | PCons (x,xs) -> Format.fprintf fmt "(%a)::(%a)" print_pattern x print_pattern xs
 
+(* on utilise des boites pour formatter joliment les expressions *)
 let rec print fmt expression = match expression with
   | Int x -> Format.fprintf fmt "%d" x
   | Bool b -> Format.fprintf fmt "%b" b
