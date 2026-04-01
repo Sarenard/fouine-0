@@ -59,7 +59,7 @@ let rec eval (value : expr) (env : (string * valeur) list) :
       | _ -> raise WrongType
     )
   | App(e1, e2) -> 
-    let* v1 = eval e1 env in let* v2 = eval e2 env in (
+    let* v2 = eval e2 env in let* v1 = eval e1 env in (
       match v1 with 
       | VF(env, pattern, e) -> (
         (*eval e (((x, v2))::env);*)
