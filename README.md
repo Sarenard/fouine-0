@@ -53,7 +53,7 @@ python tests/test_codegen.py
 ### Bugfixes Rendu 1
 TODO : Votre parseur rejette les expressions arbitraires dans la condition d’un `if`, dans les expressions arithmétiques ou dans un `raise`.
 DONE (Maya) : Les arguments d’une fonction doivent être évalués avant la fonction elle-même.
-TODO : La limite de 1000 références fait planter l’un de nos tests.
+DONE (Maya: limite maintenant 100000) : La limite de 1000 références fait planter l’un de nos tests.
 TODO : Vos fonctions sont prioritaires sur vos séquences, e.g. `fun x -> 0;1` ne devrait pas se réduire en `1`.
 DONE (Maya) : Il n’y a pas de filtrage à la définition d’une fonction, i.e. `let f = function ... `.
 DONE (Sarah) : Le parseur rejette l’expression `[0,1]`.

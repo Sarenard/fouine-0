@@ -2,7 +2,7 @@ open Expr
 open Exceptions
 open Result
 
-let size = 1000;;
+let size = 100000;;
 let heap = {
   array = Array.make size Boom;
   last_free = 0;
