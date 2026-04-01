@@ -145,8 +145,8 @@ let rec eval (value : expr) (env : (string * valeur) list) :
     List.rev lst |> eval_list env |> Result.map (fun vs -> VT (List.rev vs))
   | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
   | LinkedList lst ->
-      let* vs = eval_list env lst in
-      Ok (VL vs)
+      let* vs = eval_list env (List.rev lst) in
+      Ok (VL (List.rev vs))
   | Match(e1, lst) ->
     let* v1 = eval e1 env in 
     search lst v1 env;
