@@ -13,7 +13,7 @@ let recupere_entree () =
     [
       ("-d", Arg.Set debug, "Debug mode");
       ("-showsrc", Arg.Set showsrc, "Show source instead of run");
-      ("-noty", Arg.Set no_typing, "Desactivates typing");
+      ("-notypes", Arg.Set no_typing, "Desactivates typing");
     ] (* la liste des options, vide *)
     (fun s -> nom_fichier := s) (* la fonction a declencher lorsqu'on recupere un string qui n'est pas une option : ici c'est le nom du fichier, et on stocke cette information dans la reference nom_fichier *)
     ""; (* le message d'accueil, qui est vide *)

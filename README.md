@@ -58,7 +58,7 @@ TODO : Vos fonctions sont prioritaires sur vos séquences, e.g. `fun x -> 0;1` n
 TODO : Le parseur rejette l’expression `[0,1]`.
 TODO : Il n’y a pas de filtrage à la définition d’une fonction, i.e. `let f = function ... `.
 TODO : Les arguments d’une liste doivent être évalués de droite à gauche.
-TODO : `-noty` devrait être `-notypes`.
+DONE (Sarah) : `-noty` devrait être `-notypes`.
 ### Rendu 2
 
 ## Etapes à faire
