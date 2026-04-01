@@ -1,0 +1,1 @@
+let f = function [] -> 0 | x::xs -> x+1 in (f [2;5]);;

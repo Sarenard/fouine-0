@@ -22,7 +22,16 @@ let rec print fmt expression = match expression with
   | If(cond,trb,flb) -> Format.fprintf fmt "(@[<hv 1>@[if@ %a@]@, @[then@ %a@]@, @[else@ %a@]@])" print cond print trb print flb
   | Let(pat,e1,e2,true) -> Format.fprintf fmt "(@[<hv 1>@[let rec @[%a@ =@]@ @[%a@ in@]@]@ @[%a@]@])" print_pattern pat print e1 print e2
   | Let(pat,e1,e2,false) -> Format.fprintf fmt "(@[<hv 1>@[let @[%a@ =@]@ @[%a@ in@]@]@ @[%a@]@])" print_pattern pat print e1 print e2
-  | Fun(pat,e) -> Format.fprintf fmt "(@[<hv 1>fun@ @[%a@ ->@]@ @[%a@]@])" print_pattern pat print e
+  | Fun(pat,e) -> 
+    (match pat with
+      | PVar x when x = "" -> (match e with
+          Match(String y, lst) when y = "" -> Format.fprintf fmt "(@[<v 1>function@ %a@])" (
+          Format.(pp_print_list (fun _ -> (fun (p,e) -> Format.fprintf fmt "| @[<hv 1>@[%a@]@ ->@ @[%a@]@]" print_pattern p print e)))
+        ) lst
+        | _ -> failwith "this shouldn't happen"
+      )
+    | _ -> Format.fprintf fmt "(@[<hv 1>fun@ @[%a@ ->@]@ @[%a@]@])" print_pattern pat print e
+    )
   | App(App(String ":=", e1), e2) -> Format.fprintf fmt "(@[<hv 1>%a :=@ %a@])" print e1 print e2
   | App(e1,e2) -> Format.fprintf fmt "@[<hv 1>(@[%a@]@ @[%a@])@]" print e1 print e2
   | Tuple [] -> Format.fprintf fmt "()"

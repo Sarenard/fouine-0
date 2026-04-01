@@ -49,6 +49,7 @@ rule token = parse
 
   
   | "fun"             { FUN }
+  | "function"        { FUNCTION }
   | "->"             { ARROW }
   
   | "let"             { LET }

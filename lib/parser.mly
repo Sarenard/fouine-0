@@ -9,7 +9,7 @@ open Expr
 %token BEGIN END
 %token LPAREN RPAREN COMMA
 %token MATCH WITH PIPE
-%token LET IF THEN ELSE IN FUN ARROW REC
+%token LET IF THEN ELSE IN FUN FUNCTION ARROW REC
 %token L LE G GE NE EQ
 %token EOF
 %token TRY E RAISE
@@ -84,6 +84,7 @@ controwlflow:
 
   | FUN args=pattern+ ARROW e=expression { List.fold_right (fun x acc -> Fun(x,acc)) args e}
   | MATCH e=expression WITH m=match_inner {Match(e, m)}
+  | FUNCTION m=match_inner { Fun(PVar "", Match(String "", m)) }
   | TRY e1=expression WITH m=match_inner {Try(e1, m)}
   | operator {$1}
 
