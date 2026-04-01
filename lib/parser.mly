@@ -134,8 +134,8 @@ expr_ident:
   | BEGIN e=expression END                { e }
 
 expr_list_list:
-  | x=controwlflow                      { [x] }
-  | xs=expr_list_list SEQ x=controwlflow { xs @ [x] }
+  | x=tuple_expr                      { [x] }
+  | xs=expr_list_list SEQ x=tuple_expr { xs @ [x] }
 
 pattern:
   | p=pattern_tuple { p }

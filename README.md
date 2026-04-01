@@ -55,8 +55,8 @@ TODO : Votre parseur rejette les expressions arbitraires dans la condition d’u
 TODO : Les arguments d’une fonction doivent être évalués avant la fonction elle-même.
 TODO : La limite de 1000 références fait planter l’un de nos tests.
 TODO : Vos fonctions sont prioritaires sur vos séquences, e.g. `fun x -> 0;1` ne devrait pas se réduire en `1`.
-TODO : Le parseur rejette l’expression `[0,1]`.
 TODO : Il n’y a pas de filtrage à la définition d’une fonction, i.e. `let f = function ... `.
+DONE (Sarah) : Le parseur rejette l’expression `[0,1]`.
 DONE (Sarah) : Les arguments d’une liste doivent être évalués de droite à gauche.
 DONE (Sarah) : `-noty` devrait être `-notypes`.
 ### Rendu 2
