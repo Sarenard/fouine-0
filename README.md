@@ -51,7 +51,8 @@ python tests/test_codegen.py
 17. (Maya) Listes avec parsing litéral
 18. (Maya) Match avec les listes
 ### Bugfixes Rendu 1
-TODO : Votre parseur rejette les expressions arbitraires dans la condition d’un `if`, dans les expressions arithmétiques ou dans un `raise`.
+DONE (Maya) : Votre parseur rejette les expressions arbitraires dans la condition d’un `if` ou dans un `raise`.
+TODO : Votre parseur rejette les expressions arbitraires dans les expressions arithmétiques
 DONE (Maya) : Les arguments d’une fonction doivent être évalués avant la fonction elle-même.
 DONE (Maya: limite maintenant 100000) : La limite de 1000 références fait planter l’un de nos tests.
 TODO : Vos fonctions sont prioritaires sur vos séquences, e.g. `fun x -> 0;1` ne devrait pas se réduire en `1`.

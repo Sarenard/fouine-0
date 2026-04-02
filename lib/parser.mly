@@ -69,10 +69,10 @@ tuple_more:
 
 assign_expr:
   | e1=operator ASSIGN e2=assign_expr { App(App(String ":=", e1), e2) }
-  | e=controwlflow { e }
+  | e=controlflow { e }
 
-controwlflow:
-  | IF e1=expression THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
+controlflow:
+  | IF e1=toplevel THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
 
   (*normal let*)
   | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1, e2, e3, false) }
@@ -124,7 +124,7 @@ applic:
 expr_ident:
   | i=INT {Int i}
   | b=BOOL {Bool b}
-  | RAISE LPAREN E e=expression RPAREN {Raise e}
+  | RAISE LPAREN E e=toplevel RPAREN {Raise e}
   | BANG e=expr_ident { App(String "!", e) }
   | s=VAR {String s}
   | LBRACKET RBRACKET { LinkedList [] }
