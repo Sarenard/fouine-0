@@ -60,6 +60,8 @@ python tests/test_codegen.py
 - DONE (Sarah) : Le parseur rejette l’expression `[0,1]`.
 - DONE (Sarah) : Les arguments d’une liste doivent être évalués de droite à gauche.
 - DONE (Sarah) : `-noty` devrait être `-notypes`.
+
+Remarque: On n'a pas réussi à fix le bug sur les expressions arbitraires dans les expressions arithmétiques
 ### Rendu 2
 
 ## Etapes à faire
