@@ -20,7 +20,7 @@ open Expr
 
 /* PARTIE 3, on donne les associativités et on classe les priorités *********** */
 /* priorité plus grande sur une ligne située plus bas */
-%nonassoc ELSE IN ARROW  
+%nonassoc IN ARROW  
 %nonassoc LE GE NE
 %nonassoc L G
 %nonassoc below_PIPE
@@ -72,7 +72,7 @@ assign_expr:
   | e=controlflow { e }
 
 controlflow:
-  | IF e1=toplevel THEN e2=expression ELSE e3=expression { If(e1,e2,e3) }
+  | IF e1=expression THEN e2=expression ELSE e3=tuple_expr { If(e1,e2,e3) }
 
   (*normal let*)
   | LET e1=pattern EQ e2=expression IN e3=expression { Let(e1, e2, e3, false) }
@@ -124,7 +124,7 @@ applic:
 expr_ident:
   | i=INT {Int i}
   | b=BOOL {Bool b}
-  | RAISE LPAREN E e=toplevel RPAREN {Raise e}
+  | RAISE LPAREN E e=expression RPAREN {Raise e}
   | BANG e=expr_ident { App(String "!", e) }
   | s=VAR {String s}
   | LBRACKET RBRACKET { LinkedList [] }
