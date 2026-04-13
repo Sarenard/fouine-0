@@ -41,60 +41,58 @@ and pattern_match_list (stack : (string*valeur) list) (pat : pattern list) (vals
 
 let ( let* ) = Result.bind;;
 
-(* évaluation d'une expression en une valeur *)
-(*On fait de façon monadique avec Result*)
-let rec eval (value : expr) (env : (string * valeur) list) : 
+(* évaluation d'une expression en une valeur, en style par continuations *)
+let rec eval_cps (value : expr) (env : (string * valeur) list) k kE : 
   (valeur, valeur) result = 
   match value with 
-  | Int k -> ok (VI k)
-  | Bool b -> ok (VB b)
+  | Int n -> k (VI n)
+  | Bool b -> k (VB b)
   | String s -> (match List.assoc_opt s env with 
-    | Some v1 -> ok v1
+    | Some v1 -> k v1
     | None -> raise (UnknownVariable s))
   | If(e1, e2, e3) -> 
-    let* v = eval e1 env in (
-      match v with
-      | VB true -> eval e2 env
-      | VB false -> eval e3 env
+    eval_cps e1 env (
+      fun v -> match v with
+      | VB true -> eval_cps e2 env k kE
+      | VB false -> eval_cps e3 env k kE
       | _ -> raise WrongType
-    )
+      ) kE
   | App(e1, e2) -> 
-    let* v2 = eval e2 env in let* v1 = eval e1 env in (
+    eval_cps e2 env (fun v2 -> eval_cps e1 env (fun v1 ->
       match v1 with 
       | VF(env, pattern, e) -> (
         (*eval e (((x, v2))::env);*)
         let pat_list = pattern_match pattern v2 in (
           match pat_list with
           | None -> raise PatternUnmatched
-          | Some plst -> eval e (plst@env)
+          | Some plst -> eval_cps e (plst@env) k kE
         )
       )
-      | VF_buildin(func) -> ok (func heap env v2);
+      | VF_buildin(func) -> k (func heap env v2);
       | _ -> raise WrongType;
-    )
+    ) kE) kE
   | Let(pat, e1, e2, false) -> 
-    let* v1 = eval e1 env in
-    let pat_list = pattern_match pat v1 in 
+    eval_cps e1 env (fun v1 ->
     (
-      match pat_list with 
+      match pattern_match pat v1 with 
       | None -> raise PatternUnmatched
       | Some plst -> 
-        eval e2 (plst@env)
-    );
-  | Let(pat, e1, e2, true) -> (match pat with
+        eval_cps e2 (plst@env) k kE
+    )) kE
+  | Let(pat, e1, e2, true) -> eval_cps e1 env (
+    fun v1 -> match pat with
     (*force pat to be a val only for now*)
     | PVar s -> (
-        let* v1 = eval e1 env in (
         match v1 with
         | VF(env, pat, expr) -> (
             let rec new_env = ((s, VF(new_env, pat, expr))::env) in
-            eval e2 new_env;
+            eval_cps e2 new_env k kE;
           )
         | _ -> (raise LetRecWronglyFormed);
-      ))
+      )
     | _ -> raise UnimplementedError
-  )
-  | Fun(pat, e) -> ok (VF(env, pat, e));
+  ) kE
+  | Fun(pat, e) -> k (VF(env, pat, e));
   | Op (name, e1, e2) -> (
     (*une fonction auxiliaire pour les opérateurs de base*)
     let func = match name with
@@ -107,94 +105,117 @@ let rec eval (value : expr) (env : (string * valeur) list) :
       | ">" -> opibool env ( > )
       | ">=" -> opibool env ( >= )
       | "@" -> opilist env ( @ )
-      | "::" -> fun e1 e2 -> (
-        let* v1 = eval e1 env in
-        let* v2 = eval e2 env in match v2 with
-        | VL l -> ok (VL (v1::l))
-        | _ -> raise WrongType
+      | "::" -> fun e1 e2 k kE -> (
+        eval_cps e1 env (
+          fun v1 -> eval_cps e2 env (
+            fun v2 -> match v2 with
+            | VL l -> k (VL (v1::l))
+            | _ -> raise WrongType
+          ) kE
+        ) kE
       )
       (*duplication de code car les optimisations ne sont pas les mêmes pour && et ||*)
-      | "&&" -> fun e1 e2 -> (
-        let* v1 = eval e1 env in match v1 with
-        | VB false -> ok (VB false)
-        | VB true -> (let* v2 = eval e2 env in match v2 with
-          | (VB k2) -> ok (VB k2)
-          | _ -> raise WrongType)
-        | _ -> raise WrongType
+      | "&&" -> fun e1 e2 k kE -> (
+        eval_cps e1 env (
+          fun v1 -> match v1 with
+          | VB false -> k (VB false)
+          | VB true -> (eval_cps e2 env (
+            fun v2 -> match v2 with
+            | (VB k2) -> k (VB k2)
+            | _ -> raise WrongType)
+            ) kE
+          | _ -> raise WrongType
+        ) kE
       ) 
-      | "||" -> fun e1 e2 -> (
-        let* v1 = eval e1 env in match v1 with
-        | VB true -> ok (VB true)
-        | VB false -> (let* v2 = eval e2 env in match v2 with
-          | (VB k2) -> ok (VB k2)
-          | _ -> raise WrongType)
-        | _ -> raise WrongType
-      ) 
-      | "=" -> (fun x y -> 
-        let* v1 = eval x env in
-        let* v2 = eval y env in
-        ok (VB (compare_val v1 v2)))
-      | "<>" -> (fun x y -> 
-        let* v1 = eval x env in
-        let* v2 = eval y env in
-        ok (VB (not (compare_val v1 v2))))
+      | "||" -> fun e1 e2 k kE -> (
+        eval_cps e1 env (
+          fun v1 -> match v1 with
+          | VB true -> k (VB true)
+          | VB false -> (eval_cps e2 env (
+            fun v2 -> match v2 with
+            | (VB k2) -> k (VB k2)
+            | _ -> raise WrongType)) kE
+          | _ -> raise WrongType
+      ) kE)
+      | "=" -> (fun x y k kE -> 
+        eval_cps x env (
+          fun v1 -> eval_cps y env (
+            fun v2 -> k (VB (compare_val v1 v2))
+          ) kE
+        ) kE)
+      | "<>" -> (fun x y k kE -> 
+        eval_cps x env (
+          fun v1 -> eval_cps y env (
+            fun v2 -> k (VB (not (compare_val v1 v2)))
+          ) kE
+        ) kE)
       | _ -> (fun _ _ -> raise UnimplementedError)
-    in func e1 e2
+    in func e1 e2 k kE
     )
   | Tuple lst ->
-    List.rev lst |> eval_list env |> Result.map (fun vs -> VT (List.rev vs))
-  | Seq(e1, e2) -> let _ = eval e1 env in eval e2 env
+    eval_list env (List.rev lst) (
+      fun lst -> k (VT (List.rev lst))
+    ) kE
+  | Seq(e1, e2) -> eval_cps e1 env (fun _ -> eval_cps e2 env k kE) kE
   | LinkedList lst ->
-      let* vs = eval_list env (List.rev lst) in
-      Ok (VL (List.rev vs))
+      eval_list env (List.rev lst) (fun vs -> k (VL (List.rev vs))) kE
   | Match(e1, lst) ->
-    let* v1 = eval e1 env in 
-    search lst v1 env;
-  | Try (e1, lst) -> (
-      match eval e1 env with
-      | Ok v1 -> Ok v1
-      | Error v -> search lst v env
-    );
+    eval_cps e1 env (fun v1 -> search lst v1 env k kE) kE 
+  | Try (e1, lst) -> 
+    eval_cps e1 env (fun v1 -> k v1) (fun v -> search lst v env k kE)
   | Raise(e) ->
-    let* v = eval e env in
-    match v with
-    | VI n -> error (VE (VI n))
-    | _ -> failwith "E a besoin d'un int"
+    eval_cps e env (
+      fun v -> match v with
+      | VI n -> kE (VE (VI n))
+      | _ -> failwith "E a besoin d'un int"
+      ) kE
 (* wrapper pour gerer les operateurs entiers de fouine avec les operateurs natifs de caml *)
-and opint env func e1 e2 = 
-  let* v2 = (eval e2 env) in let* v1 = (eval e1 env) in
+and opint env func e1 e2 k kE = 
+  eval_cps e2 env (fun v2 -> eval_cps e1 env (fun v1 ->
     match (v1, v2) with
-      | (VI x, VI y) -> ok (VI (func x y))
-      | _ -> raise WrongType
+      | (VI x, VI y) -> k (VI (func x y))
+      | _ -> raise WrongType) kE
+    ) kE
 
-and opibool env func e1 e2 = 
-  let* v2 = (eval e2 env) in let* v1 = (eval e1 env) in
+and opibool env func e1 e2 k kE = 
+  eval_cps e2 env (fun v2 -> eval_cps e1 env (fun v1 ->
     match (v1, v2) with
-      | (VI x, VI y) -> ok (VB (func x y))
-      | _ -> raise WrongType
+      | (VI x, VI y) -> k (VB (func x y))
+      | _ -> raise WrongType) kE
+    ) kE
 
-and eval_list env lst =
+and eval_list env lst k kE =
   match lst with
-  | [] -> Ok []
+  | [] -> k []
   | x :: xs ->
-      let* v  = eval x env in
-      let* vs = eval_list env xs in
-      Ok (v :: vs)
+      eval_cps x env (
+        fun v -> eval_list env xs (
+          fun vs -> k (v :: vs)
+        ) kE
+      ) kE
 
-and opilist env func e1 e2 = 
-  let* v2 = (eval e2 env) in let* v1 = (eval e1 env) in
-    match (v1, v2) with
-      | (VL x, VL y) -> Ok (VL (func x y))
-      | _ -> raise WrongType
+and opilist env func e1 e2 k kE = 
+  eval_cps e2 env (
+    fun v2 -> eval_cps e1 env (
+      fun v1 -> 
+        match (v1, v2) with
+        | (VL x, VL y) -> k (VL (func x y))
+        | _ -> raise WrongType
+    ) kE
+  ) kE
 (* recherche le bon pattern dans un match with *)
-and search mylst v1 env = (
+and search mylst v1 env k kE = (
   match mylst with 
   | [] -> failwith "Pattern non trouve !!";
   | (p, e2)::xs -> 
     let pm = pattern_match p v1 in (
       match pm with
-      | None -> search xs v1 env
-      | Some plst -> eval e2 (plst@env)
+      | None -> search xs v1 env k kE
+      | Some plst -> eval_cps e2 (plst@env) k kE
     )
   )
 ;;
+
+
+let eval (value : expr) (env : (string * valeur) list) : (valeur, valeur) result = 
+  eval_cps value env (fun x -> ok x) (fun e -> error e)

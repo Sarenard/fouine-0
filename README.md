@@ -50,6 +50,7 @@ python tests/test_codegen.py
 16. (Sarah) Gérer les tuples sans parenthèses
 17. (Maya) Listes avec parsing litéral
 18. (Maya) Match avec les listes
+19. (Maya) Fonction d'évaluation en style par continuations
 ### Bugfixes Rendu 1
 - DONE (Maya) : Votre parseur rejette les expressions arbitraires dans la condition d’un `if` ou dans un `raise`.
 - TODO : Votre parseur rejette les expressions arbitraires dans les expressions arithmétiques
