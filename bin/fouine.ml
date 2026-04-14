@@ -3,12 +3,12 @@ open Format
 open Expr
 open Result
 
-let nom_fichier = ref ""
 let debug = ref false
 let showsrc = ref false
 let no_typing = ref false
 
 let recupere_entree () =
+  let nom_fichier = ref "" in
   Arg.parse (* ci-dessous les 3 arguments de Arg.parse : *)
     [
       ("-d", Arg.Set debug, "Debug mode");

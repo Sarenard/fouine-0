@@ -1,0 +1,1 @@
+try (raise (if 1 = 2 then E 3 else E 4)) with E n -> prInt n

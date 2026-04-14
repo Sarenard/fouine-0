@@ -2,7 +2,7 @@ open Expr
 open Exceptions
 open Result
 
-let size = 100000;;
+let size = 1000000;;
 let heap = {
   array = Array.make size Boom;
   last_free = 0;
@@ -95,7 +95,7 @@ let rec eval_cps (value : expr) (env : (string * valeur) list) k kE :
   | Fun(pat, e) -> k (VF(env, pat, e));
   | Op (name, e1, e2) -> (
     (*une fonction auxiliaire pour les opérateurs de base*)
-    let func = match name with
+    (match name with
       | "+" -> opint env ( + )
       | "-" -> opint env ( - )
       | "/" -> opint env ( / )
@@ -114,29 +114,8 @@ let rec eval_cps (value : expr) (env : (string * valeur) list) k kE :
           ) kE
         ) kE
       )
-      (*duplication de code car les optimisations ne sont pas les mêmes pour && et ||*)
-      | "&&" -> fun e1 e2 k kE -> (
-        eval_cps e1 env (
-          fun v1 -> match v1 with
-          | VB false -> k (VB false)
-          | VB true -> (eval_cps e2 env (
-            fun v2 -> match v2 with
-            | (VB k2) -> k (VB k2)
-            | _ -> raise WrongType)
-            ) kE
-          | _ -> raise WrongType
-        ) kE
-      ) 
-      | "||" -> fun e1 e2 k kE -> (
-        eval_cps e1 env (
-          fun v1 -> match v1 with
-          | VB true -> k (VB true)
-          | VB false -> (eval_cps e2 env (
-            fun v2 -> match v2 with
-            | (VB k2) -> k (VB k2)
-            | _ -> raise WrongType)) kE
-          | _ -> raise WrongType
-      ) kE)
+      | "&&" -> opbbool env ( && ) false
+      | "||" -> opbbool env ( || ) true
       | "=" -> (fun x y k kE -> 
         eval_cps x env (
           fun v1 -> eval_cps y env (
@@ -150,7 +129,7 @@ let rec eval_cps (value : expr) (env : (string * valeur) list) k kE :
           ) kE
         ) kE)
       | _ -> (fun _ _ -> raise UnimplementedError)
-    in func e1 e2 k kE
+    ) e1 e2 k kE
     )
   | Tuple lst ->
     eval_list env (List.rev lst) (
@@ -166,8 +145,8 @@ let rec eval_cps (value : expr) (env : (string * valeur) list) k kE :
   | Raise(e) ->
     eval_cps e env (
       fun v -> match v with
-      | VI n -> kE (VE (VI n))
-      | _ -> failwith "E a besoin d'un int"
+      | VE x -> kE (VE x)
+      | _ -> failwith "cannot raise non exception"
       ) kE
 (* wrapper pour gerer les operateurs entiers de fouine avec les operateurs natifs de caml *)
 and opint env func e1 e2 k kE = 
@@ -202,6 +181,17 @@ and opilist env func e1 e2 k kE =
         | (VL x, VL y) -> k (VL (func x y))
         | _ -> raise WrongType
     ) kE
+  ) kE
+and opbbool env func skipper e1 e2 k kE = (* skipper est la valeur absorbante sur laquelle on optimise *)
+  eval_cps e1 env (
+    fun v1 -> match v1 with
+    | VB b when b = skipper -> k (VB skipper)
+    | VB _ -> (eval_cps e2 env (
+      fun v2 -> match v2 with
+      | (VB k2) -> k (VB k2)
+      | _ -> raise WrongType)
+      ) kE
+    | _ -> raise WrongType
   ) kE
 (* recherche le bon pattern dans un match with *)
 and search mylst v1 env k kE = (

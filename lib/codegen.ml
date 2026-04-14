@@ -50,4 +50,4 @@ let rec print fmt expression = match expression with
     Format.fprintf fmt "(@[<v 1>@[<hv 1>try@ %a@ with@]@ %a@])" print e1 (
     Format.(pp_print_list (fun _ -> (fun (p,e) -> Format.fprintf fmt "| @[<hv 1>@[%a@]@ ->@ @[%a@]@]" print_pattern p print e)))
   ) lst
-  | Raise (e) -> Format.fprintf fmt "@[<hv 1>raise (E %a) @]" print e
+  | Raise (e) -> Format.fprintf fmt "@[<hv 1>raise (%a) @]" print e

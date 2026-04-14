@@ -50,7 +50,6 @@ python tests/test_codegen.py
 16. (Sarah) Gérer les tuples sans parenthèses
 17. (Maya) Listes avec parsing litéral
 18. (Maya) Match avec les listes
-19. (Maya) Fonction d'évaluation en style par continuations
 ### Bugfixes Rendu 1
 - DONE (Maya) : Votre parseur rejette les expressions arbitraires dans la condition d’un `if` ou dans un `raise`.
 - TODO : Votre parseur rejette les expressions arbitraires dans les expressions arithmétiques
@@ -63,11 +62,19 @@ python tests/test_codegen.py
 - DONE (Sarah) : `-noty` devrait être `-notypes`.
 
 Remarque: On n'a pas réussi à fix le bug sur les expressions arbitraires dans les expressions arithmétiques
+
+### Rendu 1.2 (Maya)
+19. Passage de la fonction eval en CPS
+20. Simplification du typage des let pour éviter la duplication avec let rec
+21. Expressions arbitraires dans les raise (for real this time)
+22. Reduction du nombre de variables globales dans fouine.ml
+23. Factorisation des && et || dans eval
+24. Découplage des types pattern et expr
+
 ### Rendu 2
 
 ## Etapes à faire
 3. Types algébriques
-4. Continuations
 
 # Fun sideprojects done
 Calcul de 2^n à partir du brainfuck (attention, HEAVY use de LLMs (voir message de commit pour les détails des LLMs utilisés) pour gagner en temps, c'était surtout pour voir si c'était possible), voir dans le dossier "Fun" dans le dossier de tests.

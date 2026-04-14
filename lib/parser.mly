@@ -118,13 +118,14 @@ operator:
   | e = applic { e }
 
 applic:
+  | E e2=expr_ident {App(String "E", e2)}
   | e1=applic e2=expr_ident {App(e1, e2)}
   | expr_ident {$1}
 
 expr_ident:
   | i=INT {Int i}
   | b=BOOL {Bool b}
-  | RAISE LPAREN E e=expression RPAREN {Raise e}
+  | RAISE LPAREN e=expression RPAREN {Raise e}
   | BANG e=expr_ident { App(String "!", e) }
   | s=VAR {String s}
   | LBRACKET RBRACKET { LinkedList [] }

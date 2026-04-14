@@ -1,6 +1,17 @@
 open Util
 open Exceptions
 
+(*patterns*)
+type pattern = 
+  | PTuple of pattern list
+  | PBool of bool
+  | PInt of int
+  | PVar of string
+  | PNil
+  | PCons of pattern*pattern
+  | PE of pattern (*E <n> ou E <int>, hardcodé temporairement*)
+;;
+
 (*expressions*)
 type expr =
   | Int of int
@@ -18,15 +29,6 @@ type expr =
   | Try of expr*((pattern*expr) list)
   (*to allow Raise E 3 and raise E x*)
   | Raise of expr
-
-and pattern = 
-  | PTuple of pattern list
-  | PBool of bool
-  | PInt of int
-  | PVar of string
-  | PNil
-  | PCons of pattern*pattern
-  | PE of pattern (*E <n> ou E <int>, hardcodé temporairement*)
 ;;
 
 let rec affiche_pattern pat = match pat with
@@ -122,7 +124,6 @@ let rec affiche_expr e =
     print_string "Raise(";
     affiche_expr e1;
     print_string ")";
-
 (*valeurs*)
 type valeur = 
   | VI of int
@@ -226,11 +227,14 @@ let assign_buildin _heap _env val1 =
     | VR k -> VF_buildin (assign_aux k)
     | _ -> raise WrongType
 
+let error_buildin _heap _env val1 = VE val1
+
 let empty_env = [
   ("prInt", (VF_buildin prInt));
   ("ref", (VF_buildin ref_buildin));
   ("!", (VF_buildin bang_buildin));
-  (":=", (VF_buildin assign_buildin))
+  (":=", (VF_buildin assign_buildin));
+  ("E", (VF_buildin error_buildin))
 ]
 
 (*Typing stuff*)
@@ -244,6 +248,7 @@ type ty =
   | Tprod of ty list
   | Tarr of ty * ty 
   | Tref of ty
+  | TE of ty
   | TList of ty
 
 type infer_env = (var * (var list * ty)) list
@@ -280,6 +285,7 @@ let string_of_ty (t : ty) : string =
       )
 
     | Tpolyvar v -> "PV(" ^ v ^ ")"
+    | TE v -> "E(" ^ make_str prec v ^ ")"
 
     | Tprod ts ->
         let s =
@@ -309,6 +315,7 @@ let rec canonic (t : ty) : ty =
           canonized
     )
   | Tref t -> Tref (canonic t)
+  | TE t -> TE (canonic t)
   | Tprod li ->
     Tprod (List.map canonic li)
   | Tarr (a, b) ->
@@ -326,6 +333,7 @@ let rec replace_polyvar (sb : subst) (term: ty) : ty =
       | Some t -> t
     )
   | Tref t -> Tref (replace_polyvar sb t)
+  | TE t -> TE (replace_polyvar sb t)
   | Tprod lst -> Tprod (List.map (fun t -> replace_polyvar sb t) lst)
   | Tarr(t1, t2) -> Tarr(
       replace_polyvar sb t1,
@@ -337,4 +345,5 @@ let empty_env_type = [
   ("ref", (["Y0"], Tarr(Tpolyvar("Y0"), Tref(Tpolyvar("Y0")))));
   ("!", (["Y1"], Tarr(Tref(Tpolyvar("Y1")), Tpolyvar("Y1"))));
   (":=", (["Y2"], Tarr(Tref(Tpolyvar("Y2")), Tarr(Tpolyvar("Y2"), Tprod []))));
+  ("E", (["Y3"], Tarr(Tpolyvar("Y3"), TE(Tpolyvar("Y3")))));
   ]
