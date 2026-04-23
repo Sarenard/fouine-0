@@ -1,6 +1,6 @@
-# Projet Fonctionnel, rendu 0
+# Projet Fonctionnel
 
-Ce répertoire contient le projet fouine, jusqu'au rendu 0
+Ce répertoire contient le projet fouine de la L3 d'info de l'ENS de lyon
 
 ## Compilation et execution
 
